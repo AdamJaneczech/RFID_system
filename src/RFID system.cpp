@@ -12,8 +12,8 @@ byte cards[][4]{
 };
 
 byte actualCard[4];
-
 byte cardCount;
+byte adminCards[];  //variable for admin cards
 
 String cardString[4];
 String cardName[] = {};
