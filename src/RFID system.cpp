@@ -22,6 +22,10 @@ String cardName[] = {};
 boolean adminCard = false;
 boolean registered = false;
 
+void login(){
+  Serial.println("Passed. Login OK");
+}
+
 void getCardCount(){
   cardCount = 1;
   while(EEPROM.read(4 * cardCount) != 255){ //EEPROM address -> card value has 4 8-bit numbers
@@ -79,7 +83,6 @@ void isCardRegistered(){
 void addCard(){
   Serial.println("Approximate new card to the reader...");
   // Look for new cards
-  
   while( ! mfrc522.PICC_IsNewCardPresent()) 
   {
     ;
@@ -91,6 +94,7 @@ void addCard(){
   }
   //Check if the card is registered
   isCardRegistered();
+  //If the card is NOT registered
   if(!registered){
     Serial.println("New card number: ");
     for(int i = 0; i < mfrc522.uid.size; i++){
@@ -117,17 +121,25 @@ void addCard(){
     cardCount++;
     Serial.println("Actual number of stored cards: " + String(cardCount)); 
   }
+  //If the card IS registered
+  if(registered){
+    Serial.println("Card is already registered");
+  }
 }
 
 void deleteCard(byte index){
-
+  Serial.println("deleteCard");
 }
 
 void makeCardAdmin(byte index){
-  
+  Serial.println("makeCardAdmin");
 }
 
 void sortCards(){
+  Serial.println("sortCards");
+}
+
+void viewCards(){
 
 }
 
@@ -139,6 +151,7 @@ void isCardAdmin(){
     Serial.println("Add a new card --1");
     Serial.println("Make a card admin --2");
     Serial.println("Delete an existing card by index --3");
+    Serial.println("View all cards --4");
     delay(10);
     while(!Serial.available()){
       ;
@@ -152,25 +165,20 @@ void isCardAdmin(){
       case '0':
         break;
       case '1': 
-        Serial.println("1 selected");
         addCard();
+        break;
       case '2':
+        makeCardAdmin(0);
         break;
       case '3':
+        deleteCard(0);
         break; 
+      case '4':
+        viewCards();
+        break;
       default:
         Serial.print("Selected value: " + String(reading));
     }
-    /*else{
-      Serial.println("I won't add the card");
-    }*/
-    //Make an existing card admin
-    Serial.println("Do You want to make this card admin?");
-    while(!Serial.available()){
-      ;
-    }
-    reading = "";
-
   }
 }
 
@@ -180,9 +188,10 @@ void setup()
   SPI.begin();      // Initiate  SPI bus
   mfrc522.PCD_Init();   // Initiate MFRC522
   cardName[0] = "AdamJanecek"; //for future card holder names
-  delay(50);
+  
+  Serial.println("--RFID system--");
   getCardCount();
-  delay(50);
+
   Serial.print("Saved cards: ");
   Serial.println(String(cardCount));
   if(cardCount == 1){
@@ -202,11 +211,10 @@ void setup()
   }
   Serial.println();
   Serial.println("Approximate your card to the reader...");
-  Serial.end();
 }
 void loop(){
-  Serial.begin(BAUDRATE);
   // Look for new cards
+  
   if ( ! mfrc522.PICC_IsNewCardPresent()) 
   {
     return;
@@ -225,6 +233,5 @@ void loop(){
   //Check if the inserted card has admin permissions:
   isCardAdmin();
   //
-  Serial.end();
   delay(3000);
 }
