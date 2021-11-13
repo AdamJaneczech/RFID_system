@@ -5,6 +5,7 @@
  
 #define SS_PIN 10
 #define RST_PIN 9
+#define BAUDRATE 115200
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
 byte cards[][4]{
@@ -13,7 +14,7 @@ byte cards[][4]{
 
 byte actualCard[4];
 byte cardCount;
-byte adminCards[];  //variable for admin cards
+byte adminCards[]{};  //variable for admin card indexes
 
 String cardString[4];
 String cardName[] = {};
@@ -72,72 +73,110 @@ void isCardRegistered(){
       Serial.println("Card not registered");
     }
   }
-  registered = false;
+  //registered = false;
+}
+
+void addCard(){
+  Serial.println("Approximate new card to the reader...");
+  // Look for new cards
+  
+  while( ! mfrc522.PICC_IsNewCardPresent()) 
+  {
+    ;
+  }
+  // Select one of the cards
+  while( ! mfrc522.PICC_ReadCardSerial()) 
+  {
+    ;
+  }
+  //Check if the card is registered
+  isCardRegistered();
+  if(!registered){
+    Serial.println("New card number: ");
+    for(int i = 0; i < mfrc522.uid.size; i++){
+      cards[cardCount][i] = mfrc522.uid.uidByte[i];
+      if(cardCount < 2){
+        EEPROM.write(i + 4, cards[cardCount][i]);
+      }
+      else{
+        EEPROM.write(i + 4*(cardCount), cards[cardCount][i]);
+      }
+      actualCard[i] = mfrc522.uid.uidByte[i];
+      cardString[i] = String(actualCard[i], HEX);
+      if(cardString[i].length() < 2){
+        cardString[i] = "0" + String(actualCard[i], HEX);
+      }
+      cardString[i].toUpperCase();
+      Serial.println(cardString[i] + " ");
+    }
+    Serial.print("Card ");
+    for(int i = 0; i < 4; i++){
+      Serial.print(String(cards[cardCount][i], HEX) + " ");
+    }
+    Serial.println("stored as number " + String(cardCount) + " in the database.");
+    cardCount++;
+    Serial.println("Actual number of stored cards: " + String(cardCount)); 
+  }
+}
+
+void deleteCard(byte index){
+
+}
+
+void makeCardAdmin(byte index){
+  
+}
+
+void sortCards(){
+
 }
 
 void isCardAdmin(){
   if(adminCard){
     Serial.println("Administrator card inserted");
     Serial.println("---------------------------");
-    Serial.println("Do You wish to add a new card? Y/N");
+    Serial.println("Login --0");
+    Serial.println("Add a new card --1");
+    Serial.println("Make a card admin --2");
+    Serial.println("Delete an existing card by index --3");
     delay(10);
     while(!Serial.available()){
       ;
     }
-    String reading;
-    while(Serial.available() > 0){
-      reading += char(Serial.read());
+    char reading;
+    while(Serial.available() > 0){  //!!!
+      reading = char(Serial.read());
       Serial.println(reading);
     }
-    if(reading == "y" || reading == "Y"){
-      Serial.println("Approximate new card to the reader...");
-      // Look for new cards
-      
-      while( ! mfrc522.PICC_IsNewCardPresent()) 
-      {
-        ;
-      }
-      // Select one of the cards
-      while( ! mfrc522.PICC_ReadCardSerial()) 
-      {
-        ;
-      }
-
-      Serial.println("New card number: ");
-
-      for(int i = 0; i < mfrc522.uid.size; i++){
-        cards[cardCount][i] = mfrc522.uid.uidByte[i];
-        if(cardCount < 2){
-          EEPROM.write(i + 4, cards[cardCount][i]);
-        }
-        else{
-          EEPROM.write(i + 4*(cardCount), cards[cardCount][i]);
-        }
-        actualCard[i] = mfrc522.uid.uidByte[i];
-        cardString[i] = String(actualCard[i], HEX);
-        if(cardString[i].length() < 2){
-          cardString[i] = "0" + String(actualCard[i], HEX);
-        }
-        cardString[i].toUpperCase();
-        Serial.println(cardString[i] + " ");
-      }
-      Serial.print("Card ");
-      for(int i = 0; i < 4; i++){
-        Serial.print(String(cards[cardCount][i], HEX) + " ");
-      }
-      Serial.println("stored as number " + String(cardCount) + " in the database.");
-      cardCount++;
-      Serial.println("Actual number of stored cards: " + String(cardCount));
+    switch(reading){
+      case '0':
+        break;
+      case '1': 
+        Serial.println("1 selected");
+        addCard();
+      case '2':
+        break;
+      case '3':
+        break; 
+      default:
+        Serial.print("Selected value: " + String(reading));
     }
-    else{
-      Serial.println("I won't add any card");
+    /*else{
+      Serial.println("I won't add the card");
+    }*/
+    //Make an existing card admin
+    Serial.println("Do You want to make this card admin?");
+    while(!Serial.available()){
+      ;
     }
+    reading = "";
+
   }
 }
 
 void setup() 
 {
-  Serial.begin(9600);   // Initiate a serial communication
+  Serial.begin(BAUDRATE);   // Initiate a serial communication
   SPI.begin();      // Initiate  SPI bus
   mfrc522.PCD_Init();   // Initiate MFRC522
   cardName[0] = "AdamJanecek"; //for future card holder names
@@ -166,7 +205,7 @@ void setup()
   Serial.end();
 }
 void loop(){
-  Serial.begin(9600);
+  Serial.begin(BAUDRATE);
   // Look for new cards
   if ( ! mfrc522.PICC_IsNewCardPresent()) 
   {
