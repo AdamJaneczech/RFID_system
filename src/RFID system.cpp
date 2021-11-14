@@ -15,7 +15,7 @@ byte cards[][4]{
 
 byte actualCard[4];
 byte cardCount;
-byte adminCards[8]{0};  //variable for admin card indexes
+byte adminCards[8]{};  //variable for admin card indexes
 
 String cardString[4];
 String cardName[] = {};
@@ -153,11 +153,16 @@ void sortCards(){
 
 void viewCards(){
   //Loads the card nums from EEPROM
+  byte adminCardCount = 0;
   for(int i = 0; i < cardCount; i++){
     Serial.print("Index " + String(i) + ": ");
-    for(int y = 0; y < 4; y++){
-      cards[i][y] = EEPROM.read((i*4)+y);
-      Serial.print(cards[i][y], HEX);
+    if(EEPROM.read(i*5) == 0x01){
+      adminCards[adminCardCount] = i;
+      adminCardCount++;
+    }
+    for(int y = 1; y <= 4; y++){
+      cards[i][y-1] = EEPROM.read((i*4)+y);
+      Serial.print(cards[i][y-1], HEX);
     }
     Serial.println();
   } 
