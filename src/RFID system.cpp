@@ -110,10 +110,10 @@ void addCard(){
     for(int i = 0; i < mfrc522.uid.size; i++){
       cards[cardCount][i] = mfrc522.uid.uidByte[i];
       if(cardCount < 2){
-        EEPROM.write(i + 4, cards[cardCount][i]);
+        EEPROM.write(i + 6, cards[cardCount][i]); //5th position in EEPROM determines the admin attribute
       }
       else{
-        EEPROM.write(i + 4*(cardCount), cards[cardCount][i]);
+        EEPROM.write(i + 5*(cardCount) + 1, cards[cardCount][i]); //formula to avoid writing to every 5th position in EEPROM -> admin attribute
       }
       actualCard[i] = mfrc522.uid.uidByte[i];
       cardString[i] = String(actualCard[i], HEX);
