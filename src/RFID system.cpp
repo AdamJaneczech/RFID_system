@@ -6,6 +6,7 @@
 #define SS_PIN 10
 #define RST_PIN 9
 #define BAUDRATE 115200
+
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
 byte cards[][4]{
@@ -14,7 +15,7 @@ byte cards[][4]{
 
 byte actualCard[4];
 byte cardCount;
-byte adminCards[]{0};  //variable for admin card indexes
+byte adminCards[8]{0};  //variable for admin card indexes
 
 String cardString[4];
 String cardName[] = {};
@@ -57,7 +58,7 @@ void isCardRegistered(){
   Serial.println();
   registered = false; //???
   for(int i = 0; i <= cardCount && !registered; i++){
-    Serial.println("LOOP STARTED");
+    //Serial.println("LOOP STARTED");
     for(int y = 0; y < mfrc522.uid.size; y++){
       if(cards[i][y] == actualCard[y] && y == 0){
         registered = true;
@@ -130,16 +131,19 @@ void addCard(){
     Serial.println("Actual number of stored cards: " + String(cardCount)); 
   }
   //If the card IS registered
-  if(registered){
+  else if(registered){
     Serial.println("Card is already registered");
   }
 }
 
 void deleteCard(byte index){
-  Serial.println("deleteCard");
+  Serial.print("Select card index: ");
+  Serial.println(index);
 }
 
 void makeCardAdmin(byte index){
+  byte adminCardCount = sizeof(adminCards);
+  adminCards[adminCardCount] = index;
   Serial.println("makeCardAdmin");
 }
 
@@ -148,11 +152,18 @@ void sortCards(){
 }
 
 void viewCards(){
-
+  //Loads the card nums from EEPROM
+  for(int i = 0; i < cardCount; i++){
+    Serial.print("Index " + String(i) + ": ");
+    for(int y = 0; y < 4; y++){
+      cards[i][y] = EEPROM.read((i*4)+y);
+      Serial.print(cards[i][y], HEX);
+    }
+    Serial.println();
+  } 
 }
 
 void isCardAdmin(){
-
   if(adminCard){
     Serial.println("Administrator card inserted");
     Serial.println("---------------------------");
@@ -177,10 +188,12 @@ void isCardAdmin(){
         addCard();
         break;
       case '2':
-        makeCardAdmin(0);
+        viewCards();
+        makeCardAdmin(1);
         break;
       case '3':
-        deleteCard(0);
+        viewCards();
+        //deleteCard(0);
         break; 
       case '4':
         viewCards();
@@ -211,13 +224,8 @@ void setup()
     Serial.println("no cards loaded");
   }
   //Load cards from EEPROM to variable
-  for(int i = 0; i <= cardCount; i++){
-    for(int y = 0; y < 4; y++){
-      cards[i][y] = EEPROM.read((i*4)+y);
-      Serial.print(cards[i][y], HEX);
-    }
-    Serial.println();
-  }
+  viewCards();
+
   Serial.println();
   Serial.println("Approximate your card to the reader...");
 }
