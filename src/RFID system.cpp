@@ -29,10 +29,10 @@ void login(){
 
 void getCardCount(){
   cardCount = 1;
-  while(EEPROM.read(4 * cardCount) != 255){ //EEPROM address -> card value has 4 8-bit numbers
+  while(EEPROM.read(5 * cardCount) != 255){ //EEPROM address -> card value has 4 8-bit numbers
     cardCount++;
     delay(500);
-    Serial.println("RUNNING");
+    //Serial.println("RUNNING");
   }
 }
 
@@ -102,6 +102,7 @@ void addCard(){
     ;
   }
   //Check if the card is registered
+  getCardNumber();
   isCardRegistered();
   //If the card is NOT registered
   if(!registered){
@@ -161,7 +162,7 @@ void viewCards(){
       adminCardCount++;
     }
     for(int y = 1; y <= 4; y++){
-      cards[i][y-1] = EEPROM.read((i*4)+y);
+      cards[i][y-1] = EEPROM.read((i*5)+y);
       Serial.print(cards[i][y-1], HEX);
     }
     Serial.println();
@@ -225,7 +226,7 @@ void setup()
     Serial.println("-- Administrator card only");
   }
   Serial.println("Cards loaded: ");
-  if(cardCount <= 1){
+  if(cardCount < 1){
     Serial.println("no cards loaded");
   }
   //Load cards from EEPROM to variable
