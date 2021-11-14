@@ -29,7 +29,7 @@ void login(){
 
 void getCardCount(){
   cardCount = 1;
-  while(EEPROM.read(5 * cardCount) != 255){ //EEPROM address -> card value has 4 8-bit numbers
+  while(EEPROM.read(5 * cardCount + 1) != 255){ //EEPROM address -> card value has 4 8-bit numbers
     cardCount++;
     delay(500);
     //Serial.println("RUNNING");
