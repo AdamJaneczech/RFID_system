@@ -18,10 +18,18 @@ byte cardCount;
 byte adminCards[8]{};  //variable for admin card indexes
 
 String cardString[4];
-String cardName[] = {};
+//String cardName[] = {};
+
+char serialBuffer;
   
 boolean adminCard = false;
 boolean registered = false;
+
+void cleanSerial(){
+  while(Serial.available() > 0){
+    serialBuffer = Serial.read();
+  }
+}
 
 void login(){
   Serial.println("Passed. Login OK");
@@ -143,13 +151,21 @@ void deleteCard(byte index){
 }
 
 void makeCardAdmin(){
-  byte cardIndex;
+  byte cardIndex = 0;
+  byte multiplexer = 1;
   Serial.print("Enter card index: ");
-  while(Serial.available() > 0){
-    //cardIndex 
+  cleanSerial();
+  while(!Serial.available()){
+    ;
   }
-  byte adminCardCount = sizeof(adminCards);
+  while(Serial.available() > 0){
+    /*cardIndex += (Serial.read()-48) * multiplexer; 
+    multiplexer *= 10;*/
+    Serial.print(char(Serial.read()));
+  }
+  //byte adminCardCount = sizeof(adminCards);
   //adminCards[adminCardCount] = index;
+  Serial.println(cardIndex);
   Serial.println("makeCardAdmin");
 }
 
@@ -176,6 +192,8 @@ void viewCards(){
 
 void isCardAdmin(){
   if(adminCard){
+    cleanSerial();
+
     Serial.println("Administrator card inserted");
     Serial.println("---------------------------");
     Serial.println("Login --0");
@@ -191,9 +209,9 @@ void isCardAdmin(){
     while(Serial.available() > 0){  //!!!
       reading = Serial.read() - 48; //Just 1 digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)
     }
-    while(Serial.available() > 0){  //Added this loop because of ASCII line break command
-      ;
-    }
+
+    cleanSerial(); //Added this loop because of ASCII line break command
+
     Serial.println(reading);
     //byte readByte = reading.toInt();
     switch(reading){
@@ -224,7 +242,7 @@ void setup()
   Serial.begin(BAUDRATE);   // Initiate a serial communication
   SPI.begin();      // Initiate  SPI bus
   mfrc522.PCD_Init();   // Initiate MFRC522
-  cardName[0] = "AdamJanecek"; //for future card holder names
+  //cardName[0] = "AdamJanecek"; //for future card holder names
   
   Serial.println("--RFID system--");
   getCardCount();
