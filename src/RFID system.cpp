@@ -142,9 +142,14 @@ void deleteCard(byte index){
   Serial.println(index);
 }
 
-void makeCardAdmin(byte index){
+void makeCardAdmin(){
+  byte cardIndex;
+  Serial.print("Enter card index: ");
+  while(Serial.available() > 0){
+    //cardIndex 
+  }
   byte adminCardCount = sizeof(adminCards);
-  adminCards[adminCardCount] = index;
+  //adminCards[adminCardCount] = index;
   Serial.println("makeCardAdmin");
 }
 
@@ -182,30 +187,34 @@ void isCardAdmin(){
     while(!Serial.available()){
       ;
     }
-    char reading;
+    byte reading;
     while(Serial.available() > 0){  //!!!
-      reading = char(Serial.read());
-      Serial.println(reading);
+      reading = Serial.read() - 48; //Just 1 digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)
     }
+    while(Serial.available() > 0){  //Added this loop because of ASCII line break command
+      ;
+    }
+    Serial.println(reading);
+    //byte readByte = reading.toInt();
     switch(reading){
-      case '0':
+      case 0:
         break;
-      case '1': 
+      case 1: 
         addCard();
         break;
-      case '2':
+      case 2:
         viewCards();
-        makeCardAdmin(1);
+        makeCardAdmin();
         break;
-      case '3':
+      case 3:
         viewCards();
         //deleteCard(0);
         break; 
-      case '4':
+      case 4:
         viewCards();
         break;
       default:
-        Serial.print("Selected value: " + String(reading));
+        Serial.print("No option for value: " + String(reading));
     }
   }
 }
