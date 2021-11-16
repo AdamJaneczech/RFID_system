@@ -19,16 +19,13 @@ byte adminCards[8]{};  //variable for admin card indexes
 
 String cardString[4];
 //String cardName[] = {};
-
-char serialBuffer;
   
 boolean adminCard = false;
 boolean registered = false;
 
 void cleanSerial(){
-  while(Serial.available() > 0){
-    serialBuffer = Serial.read();
-  }
+  Serial.end();
+  Serial.begin(BAUDRATE);
 }
 
 void login(){
@@ -151,22 +148,33 @@ void deleteCard(byte index){
 }
 
 void makeCardAdmin(){
-  byte cardIndex = 0;
-  byte multiplexer = 1;
+  byte received[] = {};
   Serial.print("Enter card index: ");
   cleanSerial();
-  while(!Serial.available()){
+  while(!(Serial.available() > 0)){
     ;
   }
+  byte i = 0;
   while(Serial.available() > 0){
-    /*cardIndex += (Serial.read()-48) * multiplexer; 
-    multiplexer *= 10;*/
-    Serial.print(char(Serial.read()));
+    received[i] = Serial.read();
+    if(received[i] == 10){
+      break;
+    }
+    Serial.println(received[i]);
+    i++;
   }
+  Serial.println(char(received[2]));
+  byte cardIndex = 0;
+  for(byte b = 0; b < i; b++){
+    cardIndex += pow(10, (i-b-1)) * (received[b]-48);
+    Serial.println(cardIndex);
+  }
+  //cardIndex = cardSent.toInt();
+  //
   //byte adminCardCount = sizeof(adminCards);
   //adminCards[adminCardCount] = index;
-  Serial.println(cardIndex);
-  Serial.println("makeCardAdmin");
+  //Serial.println(cardIndex);
+  //Serial.println("makeCardAdmin");
 }
 
 void sortCards(){
