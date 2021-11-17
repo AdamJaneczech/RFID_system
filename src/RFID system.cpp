@@ -148,29 +148,27 @@ void deleteCard(byte index){
 }
 
 void makeCardAdmin(){
-  byte received[] = {};
   Serial.print("Enter card index: ");
   cleanSerial();
   while(!(Serial.available() > 0)){
     ;
   }
+  byte received[5] = {};
   byte i = 0;
-  while(Serial.available() > 0){
+  while(Serial.available()){
+    //Serial.flush();
     received[i] = Serial.read();
-    if(received[i] == 10){
-      break;
-    }
     Serial.println(received[i]);
     i++;
   }
-  Serial.println(char(received[2]));
+  Serial.print(received[1]);
+  Serial.println(" after");
   byte cardIndex = 0;
-  for(byte b = 0; b < i; b++){
-    cardIndex += pow(10, (i-b-1)) * (received[b]-48);
-    Serial.println(cardIndex);
+  for(byte b = 0; b < i-2; b++){
+    cardIndex += byte(pow(10, (i-b-3)) * (received[b]-48));
   }
-  //cardIndex = cardSent.toInt();
-  //
+  cardIndex += 1; //something causes the cardIndex variable to be decreased by 1 after the calculation
+  Serial.println(cardIndex);  
   //byte adminCardCount = sizeof(adminCards);
   //adminCards[adminCardCount] = index;
   //Serial.println(cardIndex);
