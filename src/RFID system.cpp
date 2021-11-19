@@ -6,6 +6,7 @@
 #define SS_PIN 10
 #define RST_PIN 9
 #define BAUDRATE 115200
+#define RELAY 7
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
@@ -28,8 +29,19 @@ void cleanSerial(){
   Serial.begin(BAUDRATE);
 }
 
+void logout(){
+  digitalWrite(RELAY, HIGH);
+  Serial.println("Logout");
+}
+
 void login(){
+  digitalWrite(RELAY, LOW);
   Serial.println("Passed. Login OK");
+  cleanSerial();
+  while(!Serial.available() > 0){
+    
+  }
+  logout();
 }
 
 void getCardCount(){
@@ -61,7 +73,8 @@ void getCardNumber(){
 
 void isCardRegistered(){
   Serial.println();
-  registered = false; //???
+  registered = false;
+  adminCard = false;
   for(int i = 0; i <= cardCount && !registered; i++){
     //Serial.println("LOOP STARTED");
     for(int y = 0; y < mfrc522.uid.size; y++){
@@ -85,6 +98,9 @@ void isCardRegistered(){
           break;
         }
       }
+    }
+    if(registered && !adminCard){
+      login();
       break;
     }
     if(!registered && i == cardCount){
@@ -142,11 +158,6 @@ void addCard(){
   }
 }
 
-void deleteCard(byte index){
-  Serial.print("Select card index: ");
-  Serial.println(index);
-}
-
 void viewCards(){
   //Loads the card nums from EEPROM
   byte adminCardCount = 0;
@@ -164,7 +175,7 @@ void viewCards(){
   } 
 }
 
-void makeCardAdmin(){
+byte enterCardIndex(){
   Serial.print("Enter card index: ");
   cleanSerial();
   while(!(Serial.available() > 0)){
@@ -172,7 +183,6 @@ void makeCardAdmin(){
   }
   byte received[5] = {};
   byte i = 0;
-  boolean zeroDetected = false;
   while(Serial.available()){
     //Serial.flush();
     received[i] = Serial.read();
@@ -185,7 +195,30 @@ void makeCardAdmin(){
   for(byte b = 0; b < i-2; b++){
     cardIndex += byte(pow(10, (i-b-3)) * (received[b]-48));
   }
+  return cardIndex;
+}
+
+void sortCards(){
+  Serial.println("sortCards");
+}
+
+void deleteCards(){
+  Serial.print("Select card index: ");
+  viewCards();
+  byte cardIndex = enterCardIndex();
+  for(byte b = 0; b < 5; b++){
+    EEPROM.write(cardIndex * 5 + b, 0xFF);
+    cards[cardIndex][b] = 0;
+  }
+  getCardCount();
+  viewCards();
+  sortCards();
+}
+
+void makeCardAdmin(){
   //cardIndex += 1; //something causes the cardIndex variable to be decreased by 1 after the calculation
+  byte cardIndex = enterCardIndex();
+  boolean zeroDetected = false;
   Serial.println(cardIndex);
   for(byte a = 0; a < sizeof(adminCards); a++){
     if(adminCards[a] == 0){
@@ -200,10 +233,6 @@ void makeCardAdmin(){
   //adminCards[] = cardIndex;
   //Serial.println(cardIndex);
   //Serial.println("makeCardAdmin");
-}
-
-void sortCards(){
-  Serial.println("sortCards");
 }
 
 void isCardAdmin(){
@@ -232,6 +261,7 @@ void isCardAdmin(){
     //byte readByte = reading.toInt();
     switch(reading){
       case 0:
+        login();
         break;
       case 1: 
         addCard();
@@ -242,7 +272,7 @@ void isCardAdmin(){
         break;
       case 3:
         viewCards();
-        //deleteCard(0);
+        deleteCards();
         break; 
       case 4:
         viewCards();
@@ -258,6 +288,9 @@ void setup()
   Serial.begin(BAUDRATE);   // Initiate a serial communication
   SPI.begin();      // Initiate  SPI bus
   mfrc522.PCD_Init();   // Initiate MFRC522
+
+  pinMode(RELAY, OUTPUT);
+  digitalWrite(RELAY, HIGH);
   //cardName[0] = "AdamJanecek"; //for future card holder names
   
   Serial.println("--RFID system--");
