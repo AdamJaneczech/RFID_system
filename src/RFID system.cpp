@@ -147,38 +147,6 @@ void deleteCard(byte index){
   Serial.println(index);
 }
 
-void makeCardAdmin(){
-  Serial.print("Enter card index: ");
-  cleanSerial();
-  while(!(Serial.available() > 0)){
-    ;
-  }
-  byte received[5] = {};
-  byte i = 0;
-  while(Serial.available()){
-    //Serial.flush();
-    received[i] = Serial.read();
-    Serial.println(received[i]);
-    i++;
-  }
-  Serial.print(received[1]);
-  Serial.println(" after");
-  byte cardIndex = 0;
-  for(byte b = 0; b < i-2; b++){
-    cardIndex += byte(pow(10, (i-b-3)) * (received[b]-48));
-  }
-  cardIndex += 1; //something causes the cardIndex variable to be decreased by 1 after the calculation
-  Serial.println(cardIndex);  
-  //byte adminCardCount = sizeof(adminCards);
-  //adminCards[adminCardCount] = index;
-  //Serial.println(cardIndex);
-  //Serial.println("makeCardAdmin");
-}
-
-void sortCards(){
-  Serial.println("sortCards");
-}
-
 void viewCards(){
   //Loads the card nums from EEPROM
   byte adminCardCount = 0;
@@ -194,6 +162,48 @@ void viewCards(){
     }
     Serial.println();
   } 
+}
+
+void makeCardAdmin(){
+  Serial.print("Enter card index: ");
+  cleanSerial();
+  while(!(Serial.available() > 0)){
+    ;
+  }
+  byte received[5] = {};
+  byte i = 0;
+  boolean zeroDetected = false;
+  while(Serial.available()){
+    //Serial.flush();
+    received[i] = Serial.read();
+    Serial.println(received[i]);
+    i++;
+  }
+  Serial.print(received[1]);
+  Serial.println(" after");
+  byte cardIndex = 0;
+  for(byte b = 0; b < i-2; b++){
+    cardIndex += byte(pow(10, (i-b-3)) * (received[b]-48));
+  }
+  //cardIndex += 1; //something causes the cardIndex variable to be decreased by 1 after the calculation
+  Serial.println(cardIndex);
+  for(byte a = 0; a < sizeof(adminCards); a++){
+    if(adminCards[a] == 0){
+      zeroDetected = true;
+    }
+    if(adminCards[a] == 0 && zeroDetected){
+      EEPROM.write(cardIndex * 5, 1);
+      viewCards();
+      break;
+    }
+  }
+  //adminCards[] = cardIndex;
+  //Serial.println(cardIndex);
+  //Serial.println("makeCardAdmin");
+}
+
+void sortCards(){
+  Serial.println("sortCards");
 }
 
 void isCardAdmin(){
