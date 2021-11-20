@@ -7,6 +7,8 @@
 #define RST_PIN 9
 #define BAUDRATE 115200
 #define RELAY 7
+#define ADMIN_CARDS 8
+#define MAX_EEPROM 1023
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
@@ -16,7 +18,7 @@ byte cards[][4]{
 
 byte actualCard[4];
 byte cardCount;
-byte adminCards[8]{};  //variable for admin card indexes
+byte adminCards[ADMIN_CARDS]{};  //variable for admin card indexes
 
 String cardString[4];
 //String cardName[] = {};
@@ -44,11 +46,29 @@ void login(){
   logout();
 }
 
-void getCardCount(){
+void getCardInfo(){
   cardCount = 1;
-  while(EEPROM.read(5 * cardCount + 1) != 255){ //EEPROM address -> card value has 4 8-bit numbers
-    cardCount++;
-    delay(500);
+  byte loopCount = 0;
+  byte emptyFields = 0;
+  byte emptyIndex = 0;
+  while(loopCount <= ((MAX_EEPROM + 1) / 4) - ADMIN_CARDS){ //EEPROM address -> card value has 4 8-bit numbers
+    if(EEPROM.read(loopCount) == 0xFF && (loopCount + 1) % 4 != 0){
+      emptyFields++;
+    }
+    if(0 < emptyFields < 4 && EEPROM.read(loopCount) != 0xFF){  //!!!??? not sure about ... < ... < ...
+      emptyFields = 0;
+    }
+    if(emptyFields == 0 && (loopCount + 1) % 4 == 0){ //a 4 loop checking variable/something needs to be added
+      cardCount++;
+      if(emptyIndex != 0){
+        emptyFields = EEPROM.read(loopCount); //temporarily use the emptyFields variable as a cache
+      }
+    }
+    if(emptyFields == 4){
+      emptyIndex = loopCount - 4;
+      emptyFields = 0;    
+    }
+    loopCount++;
     //Serial.println("RUNNING");
   }
 }
@@ -133,8 +153,12 @@ void addCard(){
       if(cardCount < 2){
         EEPROM.write(i + 6, cards[cardCount][i]); //5th position in EEPROM determines the admin attribute
       }
-      else{
+      else if(cardCount > 1 && cardCount <= sizeof(adminCards)){
         EEPROM.write(i + 5*(cardCount) + 1, cards[cardCount][i]); //formula to avoid writing to every 5th position in EEPROM -> admin attribute
+      }
+      else{
+        EEPROM.write(i + 4*(cardCount) + 1, cards[cardCount][i]); //formula to avoid writing to every 5th position in EEPROM -> admin attribute
+
       }
       actualCard[i] = mfrc522.uid.uidByte[i];
       cardString[i] = String(actualCard[i], HEX);
@@ -161,15 +185,16 @@ void addCard(){
 void viewCards(){
   //Loads the card nums from EEPROM
   byte adminCardCount = 0;
-  for(int i = 0; i < cardCount; i++){
+  //the following cycle expects the cards are already ordered (thus the max cardCount value for i -> not searching in the entire memory)
+  for(int i = 0; i <= cardCount; i++){
     Serial.print("Index " + String(i) + ": ");
-    if(EEPROM.read(i*5) == 0x01){
+    /*if(EEPROM.read(i) == 0x01){
       adminCards[adminCardCount] = i;
       adminCardCount++;
-    }
-    for(int y = 1; y <= 4; y++){
-      cards[i][y-1] = EEPROM.read((i*5)+y);
-      Serial.print(cards[i][y-1], HEX);
+    }*/
+    for(int y = 0; y < 4; y++){
+      cards[i][y] = EEPROM.read((i*4)+y);
+      Serial.print(cards[i][y], HEX);
     }
     Serial.println();
   } 
@@ -210,7 +235,7 @@ void deleteCards(){
     EEPROM.write(cardIndex * 5 + b, 0xFF);
     cards[cardIndex][b] = 0;
   }
-  getCardCount();
+  getCardInfo();
   viewCards();
   sortCards();
 }
@@ -294,7 +319,7 @@ void setup()
   //cardName[0] = "AdamJanecek"; //for future card holder names
   
   Serial.println("--RFID system--");
-  getCardCount();
+  getCardInfo();
 
   Serial.print("Saved cards: ");
   Serial.println(String(cardCount));
