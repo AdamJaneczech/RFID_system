@@ -12,12 +12,12 @@
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
-byte cards[][4]{
+byte cards[256][4]{
   {0x77, 0x02, 0x8E, 0x3F},
 };
 
 byte actualCard[4];
-byte cardCount;
+byte cardCount = 1;
 byte adminCards[ADMIN_CARDS]{};  //variable for admin card indexes
 
 String cardString[4];
@@ -33,12 +33,12 @@ void cleanSerial(){
 
 void logout(){
   digitalWrite(RELAY, HIGH);
-  Serial.println("Logout");
+  Serial.println(F("Logout"));
 }
 
 void login(){
   digitalWrite(RELAY, LOW);
-  Serial.println("Passed. Login OK");
+  Serial.println(F("Passed. Login OK"));
   cleanSerial();
   while(!Serial.available() > 0){
     
@@ -48,28 +48,27 @@ void login(){
 
 void getCardInfo(){
   cardCount = 1;
-  byte loopCount = 0;
+  int loopCount = 0;
   byte emptyFields = 0;
   byte emptyIndex = 0;
-  while(loopCount <= ((MAX_EEPROM + 1) / 4) - ADMIN_CARDS){ //EEPROM address -> card value has 4 8-bit numbers
-    if(EEPROM.read(loopCount) == 0xFF && (loopCount + 1) % 4 != 0){
+  Serial.println(F("Empty indexes:"));
+  while(loopCount <= MAX_EEPROM + 1 - ADMIN_CARDS * 8){ //EEPROM address -> card value has 4 8-bit numbers
+    if(EEPROM.read(loopCount) == 0xFF){
       emptyFields++;
     }
-    if(0 < emptyFields < 4 && EEPROM.read(loopCount) != 0xFF){  //!!!??? not sure about ... < ... < ...
-      emptyFields = 0;
-    }
-    if(emptyFields == 0 && (loopCount + 1) % 4 == 0){ //a 4 loop checking variable/something needs to be added
+    if((loopCount + 1) % 4 == 0 && emptyFields < 4){ //a 4 loop checking variable/something needs to be added
       cardCount++;
       if(emptyIndex != 0){
         emptyFields = EEPROM.read(loopCount); //temporarily use the emptyFields variable as a cache
       }
     }
     if(emptyFields == 4){
-      emptyIndex = loopCount - 4;
+      emptyIndex = (loopCount + 1) / 4;
+      Serial.println(emptyIndex);
+      //Serial.println(", ");
       emptyFields = 0;    
     }
     loopCount++;
-    //Serial.println("RUNNING");
   }
 }
 
@@ -124,14 +123,14 @@ void isCardRegistered(){
       break;
     }
     if(!registered && i == cardCount){
-      Serial.println("Card not registered");
+      Serial.println(F("Card not registered"));
     }
   }
   //registered = false;
 }
 
 void addCard(){
-  Serial.println("Approximate new card to the reader...");
+  Serial.println(F("Approximate new card to the reader..."));
   // Look for new cards
   while( ! mfrc522.PICC_IsNewCardPresent()) 
   {
@@ -147,7 +146,7 @@ void addCard(){
   isCardRegistered();
   //If the card is NOT registered
   if(!registered){
-    Serial.println("New card number: ");
+    Serial.println(F("New card number: "));
     for(int i = 0; i < mfrc522.uid.size; i++){
       cards[cardCount][i] = mfrc522.uid.uidByte[i];
       if(cardCount < 2){
@@ -168,7 +167,7 @@ void addCard(){
       cardString[i].toUpperCase();
       Serial.println(cardString[i] + " ");
     }
-    Serial.print("Card ");
+    Serial.print(F("Card "));
     for(int i = 0; i < 4; i++){
       Serial.print(String(cards[cardCount][i], HEX) + " ");
     }
@@ -178,7 +177,7 @@ void addCard(){
   }
   //If the card IS registered
   else if(registered){
-    Serial.println("Card is already registered");
+    Serial.println(F("Card is already registered"));
   }
 }
 
@@ -186,13 +185,13 @@ void viewCards(){
   //Loads the card nums from EEPROM
   byte adminCardCount = 0;
   //the following cycle expects the cards are already ordered (thus the max cardCount value for i -> not searching in the entire memory)
-  for(int i = 0; i <= cardCount; i++){
+  for(byte i = 0; i < cardCount; i++){
     Serial.print("Index " + String(i) + ": ");
     /*if(EEPROM.read(i) == 0x01){
       adminCards[adminCardCount] = i;
       adminCardCount++;
     }*/
-    for(int y = 0; y < 4; y++){
+    for(byte y = 0; y < 4; y++){
       cards[i][y] = EEPROM.read((i*4)+y);
       Serial.print(cards[i][y], HEX);
     }
@@ -201,7 +200,7 @@ void viewCards(){
 }
 
 byte enterCardIndex(){
-  Serial.print("Enter card index: ");
+  Serial.print(F("Enter card index: "));
   cleanSerial();
   while(!(Serial.available() > 0)){
     ;
@@ -215,7 +214,7 @@ byte enterCardIndex(){
     i++;
   }
   Serial.print(received[1]);
-  Serial.println(" after");
+  Serial.println(F(" after"));
   byte cardIndex = 0;
   for(byte b = 0; b < i-2; b++){
     cardIndex += byte(pow(10, (i-b-3)) * (received[b]-48));
@@ -224,11 +223,11 @@ byte enterCardIndex(){
 }
 
 void sortCards(){
-  Serial.println("sortCards");
+  Serial.println(F("sortCards"));
 }
 
 void deleteCards(){
-  Serial.print("Select card index: ");
+  Serial.print(F("Select card index: "));
   viewCards();
   byte cardIndex = enterCardIndex();
   for(byte b = 0; b < 5; b++){
@@ -264,13 +263,13 @@ void isCardAdmin(){
   if(adminCard){
     cleanSerial();
 
-    Serial.println("Administrator card inserted");
-    Serial.println("---------------------------");
-    Serial.println("Login --0");
-    Serial.println("Add a new card --1");
-    Serial.println("Make a card admin --2");
-    Serial.println("Delete an existing card by index --3");
-    Serial.println("View all cards --4");
+    Serial.println(F("Administrator card inserted"));
+    Serial.println(F("---------------------------"));
+    Serial.println(F("Login --0"));
+    Serial.println(F("Add a new card --1"));
+    Serial.println(F("Make a card admin --2"));
+    Serial.println(F("Delete an existing card by index --3"));
+    Serial.println(F("View all cards --4"));
     delay(10);
     while(!Serial.available()){
       ;
@@ -318,23 +317,23 @@ void setup()
   digitalWrite(RELAY, HIGH);
   //cardName[0] = "AdamJanecek"; //for future card holder names
   
-  Serial.println("--RFID system--");
+  Serial.println(F("--RFID system--"));
   getCardInfo();
 
-  Serial.print("Saved cards: ");
-  Serial.println(String(cardCount));
+  Serial.print(F("Saved cards: "));
+  Serial.println(cardCount);
   if(cardCount == 1){
-    Serial.println("-- Administrator card only");
+    Serial.println(F("-- Administrator card only"));
   }
-  Serial.println("Cards loaded: ");
+  Serial.println(F("Cards loaded: "));
   if(cardCount < 1){
-    Serial.println("no cards loaded");
+    Serial.println(F("no cards loaded"));
   }
   //Load cards from EEPROM to variable
   viewCards();
 
   Serial.println();
-  Serial.println("Approximate your card to the reader...");
+  Serial.println(F("Approximate your card to the reader..."));
 }
 void loop(){
   // Look for new cards
@@ -349,7 +348,7 @@ void loop(){
     return;
   }
   
-  Serial.println("Actual card number: ");
+  Serial.println(F("Actual card number: "));
   //Read the card number:
   getCardNumber();
   //Check if the card is registered:
