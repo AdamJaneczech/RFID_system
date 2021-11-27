@@ -19,6 +19,7 @@ byte cards[256][4]{
 byte actualCard[4];
 byte cardCount = 1;
 byte adminCards[ADMIN_CARDS]{};  //variable for admin card indexes
+byte lowestEmptyIndex;
 
 String cardString[4];
 //String cardName[] = {};
@@ -47,7 +48,7 @@ void login(){
 }
 
 void getCardInfo(){
-  cardCount = 1;
+  cardCount = 0;
   int loopCount = 0;
   byte emptyFields = 0;
   byte emptyIndex = 0;
@@ -56,13 +57,17 @@ void getCardInfo(){
     if(EEPROM.read(loopCount) == 0xFF){
       emptyFields++;
     }
-    if((loopCount + 1) % 4 == 0 && emptyFields < 4){ //a 4 loop checking variable/something needs to be added
+    else if((loopCount + 1) % 4 == 0 && emptyFields < 4){ //a 4 loop checking variable/something needs to be added
       cardCount++;
       if(emptyIndex != 0){
         emptyFields = EEPROM.read(loopCount); //temporarily use the emptyFields variable as a cache
       }
     }
     if(emptyFields == 4){
+      if(emptyIndex == 0){
+        lowestEmptyIndex = (loopCount + 1) / 4;
+        Serial.print("Lowest: ");
+      }
       emptyIndex = (loopCount + 1) / 4;
       Serial.println(emptyIndex);
       //Serial.println(", ");
@@ -81,34 +86,28 @@ void getCardNumber(){
     }
     cardString[i].toUpperCase();
     Serial.print(cardString[i] + " ");
-    /*if(i == 0){
-      adminCard = (actualCard[i] == cards[0][i]);
-    }
-    if(adminCard == true && i != 0){
-      adminCard = actualCard[i] == cards[0][i];
-    }*/
   }
 }
 
-void isCardRegistered(){
+void isCardRegistered(){ //modified here -> EEPROM direct reading
   Serial.println();
   registered = false;
   adminCard = false;
-  for(int i = 0; i <= cardCount && !registered; i++){
-    //Serial.println("LOOP STARTED");
-    for(int y = 0; y < mfrc522.uid.size; y++){
-      if(cards[i][y] == actualCard[y] && y == 0){
+  for(int i = 0; i <= MAX_EEPROM + 1 - ADMIN_CARDS * 8 && !registered; i += 4){
+    for(int y = i; y < i + 4; y++){
+      if(EEPROM.read(y) == actualCard[y-i] && y == i){
         registered = true;
         Serial.println("Byte " + String(y) + " OK");
       }
-      if(cards[i][y] == actualCard[y] && y != 0 && registered){
+      if(EEPROM.read(y) == actualCard[y-i] && y != i && registered){
         Serial.println("Byte " + String(y) + " OK");
       }
-      if(cards[i][y] != actualCard[y]){
+      if(EEPROM.read(y) != actualCard[y-i]){
         registered = false;
+        break;
       }
     }
-    if(registered /*&& !adminCard*/){
+    if(registered){
       Serial.println("Card registered at the number of " + String(i));
       //Check for admin cards
       for(int index = 0; index <= cardCount; index++){
@@ -122,7 +121,7 @@ void isCardRegistered(){
       login();
       break;
     }
-    if(!registered && i == cardCount){
+    if(!registered /*&& i == cardCount*/){
       Serial.println(F("Card not registered"));
     }
   }
@@ -143,35 +142,30 @@ void addCard(){
   }
   //Check if the card is registered
   getCardNumber();
+  getCardInfo();
   isCardRegistered();
   //If the card is NOT registered
-  if(!registered){
+  if(!registered){  //EEPROM direct reading -> modify here
     Serial.println(F("New card number: "));
     for(int i = 0; i < mfrc522.uid.size; i++){
-      cards[cardCount][i] = mfrc522.uid.uidByte[i];
-      if(cardCount < 2){
-        EEPROM.write(i + 6, cards[cardCount][i]); //5th position in EEPROM determines the admin attribute
+      if(cardCount < 240){  //MODIFY
+        EEPROM.write(lowestEmptyIndex * 4 + i, mfrc522.uid.uidByte[i]); //5th position in EEPROM determines the admin attribute
       }
-      else if(cardCount > 1 && cardCount <= sizeof(adminCards)){
-        EEPROM.write(i + 5*(cardCount) + 1, cards[cardCount][i]); //formula to avoid writing to every 5th position in EEPROM -> admin attribute
-      }
-      else{
-        EEPROM.write(i + 4*(cardCount) + 1, cards[cardCount][i]); //formula to avoid writing to every 5th position in EEPROM -> admin attribute
-
-      }
+      //--Print String card number--
       actualCard[i] = mfrc522.uid.uidByte[i];
       cardString[i] = String(actualCard[i], HEX);
       if(cardString[i].length() < 2){
         cardString[i] = "0" + String(actualCard[i], HEX);
       }
       cardString[i].toUpperCase();
-      Serial.println(cardString[i] + " ");
+      Serial.print(cardString[i] + " ");
+      //----//
     }
     Serial.print(F("Card "));
     for(int i = 0; i < 4; i++){
-      Serial.print(String(cards[cardCount][i], HEX) + " ");
+      Serial.println(cardString[i] + " ");
     }
-    Serial.println("stored as number " + String(cardCount) + " in the database.");
+    Serial.println("stored as number " + String(lowestEmptyIndex) + " in the database.");
     cardCount++;
     Serial.println("Actual number of stored cards: " + String(cardCount)); 
   }
@@ -192,8 +186,7 @@ void viewCards(){
       adminCardCount++;
     }*/
     for(byte y = 0; y < 4; y++){
-      cards[i][y] = EEPROM.read((i*4)+y);
-      Serial.print(cards[i][y], HEX);
+      Serial.print(EEPROM.read((i*4)+y), HEX);
     }
     Serial.println();
   } 
