@@ -9,6 +9,7 @@
 #define RELAY 7
 #define ADMIN_CARDS 8
 #define MAX_EEPROM 1023
+#define MAX_CARDS (MAX_EEPROM+1)/4 - ADMIN_CARDS
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
@@ -109,9 +110,8 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
     }
     if(registered){
       Serial.println("Card registered at the number of " + String(i));
-      //Check for admin cards
-      for(int index = 0; index <= cardCount; index++){
-        adminCard = (i == adminCards[index]);
+      for(int index = MAX_EEPROM - ADMIN_CARDS; index <= MAX_EEPROM; index++){
+        adminCard = EEPROM.read(index) == i;
         if(adminCard){
           break;
         }
@@ -149,7 +149,7 @@ void addCard(){
     Serial.println(F("New card number: "));
     for(int i = 0; i < mfrc522.uid.size; i++){
       if(cardCount < 240){  //MODIFY
-        EEPROM.write(lowestEmptyIndex * 4 + i, mfrc522.uid.uidByte[i]); //5th position in EEPROM determines the admin attribute
+        EEPROM.write((lowestEmptyIndex - 1) * 4 + i, mfrc522.uid.uidByte[i]); //5th position in EEPROM determines the admin attribute
       }
       //--Print String card number--
       actualCard[i] = mfrc522.uid.uidByte[i];
@@ -309,7 +309,7 @@ void setup()
   pinMode(RELAY, OUTPUT);
   digitalWrite(RELAY, HIGH);
   //cardName[0] = "AdamJanecek"; //for future card holder names
-  
+  Serial.println(MAX_CARDS);
   Serial.println(F("--RFID system--"));
   getCardInfo();
 
