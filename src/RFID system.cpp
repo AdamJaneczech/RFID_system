@@ -109,9 +109,9 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
       }
     }
     if(registered){
-      Serial.println("Card registered at the number of " + String(i));
-      for(int index = MAX_EEPROM - ADMIN_CARDS; index <= MAX_EEPROM; index++){
-        adminCard = EEPROM.read(index) == i;
+      Serial.println("Card registered at the number of " + String(i / 4));
+      for(int index = MAX_EEPROM - ADMIN_CARDS + 1; index <= MAX_EEPROM; index++){
+        adminCard = EEPROM.read(index) == i/4;
         if(adminCard){
           break;
         }
@@ -198,7 +198,7 @@ byte enterCardIndex(){
   while(!(Serial.available() > 0)){
     ;
   }
-  byte received[5] = {};
+  byte received[3] = {};
   byte i = 0;
   while(Serial.available()){
     //Serial.flush();
@@ -235,16 +235,14 @@ void deleteCards(){
 void makeCardAdmin(){
   //cardIndex += 1; //something causes the cardIndex variable to be decreased by 1 after the calculation
   byte cardIndex = enterCardIndex();
-  boolean zeroDetected = false;
   Serial.println(cardIndex);
-  for(byte a = 0; a < sizeof(adminCards); a++){
-    if(adminCards[a] == 0){
-      zeroDetected = true;
-    }
-    if(adminCards[a] == 0 && zeroDetected){
-      EEPROM.write(cardIndex * 5, 1);
-      viewCards();
+  for(int a = MAX_EEPROM - ADMIN_CARDS + 1; a <= MAX_EEPROM; a++){
+    if(EEPROM.read(a) == 0xFF){
+      EEPROM.write(a, cardIndex);
       break;
+    }
+    else if(a == MAX_EEPROM){
+      Serial.println("No more admin card capacity");
     }
   }
   //adminCards[] = cardIndex;
