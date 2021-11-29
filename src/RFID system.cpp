@@ -13,13 +13,8 @@
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
-byte cards[256][4]{
-  {0x77, 0x02, 0x8E, 0x3F},
-};
-
 byte actualCard[4];
 byte cardCount = 1;
-byte adminCards[ADMIN_CARDS]{};  //variable for admin card indexes
 byte lowestEmptyIndex;
 
 String cardString[4];
@@ -27,6 +22,17 @@ String cardString[4];
   
 boolean adminCard = false;
 boolean registered = false;
+
+void eepromPrint(){
+  Serial.println(F("Memory map:"));
+  for(int i = 0; i <= MAX_EEPROM; i++){
+    Serial.print(EEPROM.read(i));
+    Serial.print(' ');
+    if(i % 31 == 0 && i != 0){
+      Serial.println();
+    }
+  }
+}
 
 void cleanSerial(){
   Serial.end();
@@ -54,28 +60,35 @@ void getCardInfo(){
   byte emptyFields = 0;
   byte emptyIndex = 0;
   Serial.println(F("Empty indexes:"));
-  while(loopCount <= MAX_EEPROM + 1 - ADMIN_CARDS * 8){ //EEPROM address -> card value has 4 8-bit numbers
+  while(loopCount <= MAX_EEPROM + 1 - ADMIN_CARDS * 4){ //EEPROM address -> card value has 4 8-bit numbers
     if(EEPROM.read(loopCount) == 0xFF){
       emptyFields++;
     }
     else if((loopCount + 1) % 4 == 0 && emptyFields < 4){ //a 4 loop checking variable/something needs to be added
       cardCount++;
       if(emptyIndex != 0){
-        emptyFields = EEPROM.read(loopCount); //temporarily use the emptyFields variable as a cache
+        emptyFields = 0;
+        //emptyFields = EEPROM.read(loopCount); //temporarily use the emptyFields variable as a cache
       }
     }
     if(emptyFields == 4){
       if(emptyIndex == 0){
-        lowestEmptyIndex = (loopCount + 1) / 4;
+        lowestEmptyIndex = ((loopCount + 1) / 4) - 1;
         Serial.print("Lowest: ");
+        Serial.println(lowestEmptyIndex);
       }
-      emptyIndex = (loopCount + 1) / 4;
-      Serial.println(emptyIndex);
+      emptyIndex = ((loopCount + 1) / 4) - 1;
+      Serial.print(emptyIndex);
+      Serial.print(' ');
+      if(loopCount % 32 == 0){
+        Serial.println();
+      }
       //Serial.println(", ");
       emptyFields = 0;    
     }
     loopCount++;
   }
+  Serial.println();
 }
 
 void getCardNumber(){
@@ -94,7 +107,7 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
   Serial.println();
   registered = false;
   adminCard = false;
-  for(int i = 0; i <= MAX_EEPROM + 1 - ADMIN_CARDS * 8 && !registered; i += 4){
+  for(int i = 0; i <= MAX_EEPROM + 1 - ADMIN_CARDS * 4 && !registered; i += 4){
     for(int y = i; y < i + 4; y++){
       if(EEPROM.read(y) == actualCard[y-i] && y == i){
         registered = true;
@@ -121,7 +134,7 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
       login();
       break;
     }
-    if(!registered /*&& i == cardCount*/){
+    if(!registered && i == MAX_EEPROM + 1 - ADMIN_CARDS * 4){
       Serial.println(F("Card not registered"));
     }
   }
@@ -141,6 +154,7 @@ void addCard(){
     ;
   }
   //Check if the card is registered
+  Serial.println("APPROX ok");
   getCardNumber();
   getCardInfo();
   isCardRegistered();
@@ -149,7 +163,7 @@ void addCard(){
     Serial.println(F("New card number: "));
     for(int i = 0; i < mfrc522.uid.size; i++){
       if(cardCount < 240){  //MODIFY
-        EEPROM.write((lowestEmptyIndex - 1) * 4 + i, mfrc522.uid.uidByte[i]); //5th position in EEPROM determines the admin attribute
+        EEPROM.write((lowestEmptyIndex) * 4 + i, mfrc522.uid.uidByte[i]); //5th position in EEPROM determines the admin attribute
       }
       //--Print String card number--
       actualCard[i] = mfrc522.uid.uidByte[i];
@@ -177,18 +191,17 @@ void addCard(){
 
 void viewCards(){
   //Loads the card nums from EEPROM
-  byte adminCardCount = 0;
-  //the following cycle expects the cards are already ordered (thus the max cardCount value for i -> not searching in the entire memory)
-  for(byte i = 0; i < cardCount; i++){
-    Serial.print("Index " + String(i) + ": ");
-    /*if(EEPROM.read(i) == 0x01){
-      adminCards[adminCardCount] = i;
-      adminCardCount++;
-    }*/
+  for(byte i = 0; i < (MAX_EEPROM + 1 - ADMIN_CARDS) / 4; i++){
     for(byte y = 0; y < 4; y++){
-      Serial.print(EEPROM.read((i*4)+y), HEX);
+      if(EEPROM.read((i*4)+y) == 0xFF){
+        ;
+      }
+      else{
+        Serial.print("Index " + String(i) + ": ");
+        Serial.print(EEPROM.read((i*4)+y), HEX);
+        Serial.println();
+      }
     }
-    Serial.println();
   } 
 }
 
@@ -215,21 +228,20 @@ byte enterCardIndex(){
   return cardIndex;
 }
 
-void sortCards(){
-  Serial.println(F("sortCards"));
-}
-
 void deleteCards(){
   Serial.print(F("Select card index: "));
   viewCards();
   byte cardIndex = enterCardIndex();
-  for(byte b = 0; b < 5; b++){
-    EEPROM.write(cardIndex * 5 + b, 0xFF);
-    cards[cardIndex][b] = 0;
+  for(int i = MAX_EEPROM + 1 - ADMIN_CARDS; i <= MAX_EEPROM; i++){
+    if(EEPROM.read(i) == cardIndex){
+      EEPROM.write(i, 0xFF);
+    }
+  }
+  for(byte b = 0; b < 4; b++){
+    EEPROM.write(cardIndex * 4 + b, 0xFF);
   }
   getCardInfo();
   viewCards();
-  sortCards();
 }
 
 void makeCardAdmin(){
@@ -306,7 +318,7 @@ void setup()
 
   pinMode(RELAY, OUTPUT);
   digitalWrite(RELAY, HIGH);
-  //cardName[0] = "AdamJanecek"; //for future card holder names
+  eepromPrint();
   Serial.println(MAX_CARDS);
   Serial.println(F("--RFID system--"));
   getCardInfo();
@@ -322,8 +334,6 @@ void setup()
   }
   //Load cards from EEPROM to variable
   viewCards();
-
-  Serial.println();
   Serial.println(F("Approximate your card to the reader..."));
 }
 void loop(){
@@ -347,5 +357,5 @@ void loop(){
   //Check if the inserted card has admin permissions:
   isCardAdmin();
   //
-  delay(3000);
+  delay(2000);
 }
