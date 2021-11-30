@@ -28,6 +28,8 @@ boolean registered = false;
 #define OLED_RESET 4
 Adafruit_SSD1306 display(128,64,&Wire, -1);
 
+#include <OLED_icons.h>
+
 void eepromPrint(){
   Serial.println(F("Memory map:"));
   for(int i = 0; i <= MAX_EEPROM; i++){
@@ -97,6 +99,7 @@ void getCardInfo(){
 }
 
 void getCardNumber(){
+  //display.fillRect(0,56,128,8,BLACK);
   for(int i = 0; i < mfrc522.uid.size; i++){
     actualCard[i] = mfrc522.uid.uidByte[i];
     cardString[i] = String(actualCard[i], HEX);
@@ -105,6 +108,8 @@ void getCardNumber(){
     }
     cardString[i].toUpperCase();
     Serial.print(cardString[i] + " ");
+    display.print(cardString[i]);
+    display.display();
   }
 }
 
@@ -127,6 +132,8 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
       }
     }
     if(registered){
+      display.fillRect(0,56,128,8,BLACK);
+      display.print("Registered at: " + String(i / 4));
       Serial.println("Card registered at the number of " + String(i / 4));
       for(int index = MAX_EEPROM - ADMIN_CARDS + 1; index <= MAX_EEPROM; index++){
         adminCard = EEPROM.read(index) == i/4;
@@ -322,12 +329,14 @@ void setup()
   mfrc522.PCD_Init();   // Initiate MFRC522
 
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  display.setTextSize(2);
-  display.setTextColor(BLACK, WHITE);
 
   display.clearDisplay();
-  display.setCursor(35, 0);
-  display.print("RFID");
+  display.drawBitmap(36,0,gymkrenLogo,56,56,BLACK, WHITE);
+  display.display();
+
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 56);
   display.display();
 
   pinMode(RELAY, OUTPUT);
@@ -335,10 +344,21 @@ void setup()
   eepromPrint();
   Serial.println(MAX_CARDS);
   Serial.println(F("--RFID system--"));
+  //
+  display.print("Getting card info");
+  display.display();
+  //
   getCardInfo();
-
+  //
   Serial.print(F("Saved cards: "));
   Serial.println(cardCount);
+  //
+  display.fillRect(0,56,128,8,BLACK);
+  display.setCursor(0, 56);
+  display.print("Saved cards: ");
+  display.print(cardCount);
+  display.display();
+
   if(cardCount == 1){
     Serial.println(F("-- Administrator card only"));
   }
@@ -350,11 +370,11 @@ void setup()
   viewCards();
   Serial.println(F("Approximate your card to the reader..."));
 
-  display.setTextSize(1);
+  /*display.setTextSize(1);
   display.setTextColor(WHITE);
   display.setCursor(0, 20);
   display.print("Log in");
-  display.display();
+  display.display();*/
 }
 void loop(){
   // Look for new cards
