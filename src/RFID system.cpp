@@ -2,6 +2,8 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <EEPROM.h>
+#include <Adafruit_SSD1306.h>
+#include <Adafruit_I2CDevice.h>
  
 #define SS_PIN 10
 #define RST_PIN 9
@@ -22,6 +24,9 @@ String cardString[4];
   
 boolean adminCard = false;
 boolean registered = false;
+
+#define OLED_RESET 4
+Adafruit_SSD1306 display(128,64,&Wire, -1);
 
 void eepromPrint(){
   Serial.println(F("Memory map:"));
@@ -316,6 +321,15 @@ void setup()
   SPI.begin();      // Initiate  SPI bus
   mfrc522.PCD_Init();   // Initiate MFRC522
 
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.setTextSize(2);
+  display.setTextColor(BLACK, WHITE);
+
+  display.clearDisplay();
+  display.setCursor(35, 0);
+  display.print("RFID");
+  display.display();
+
   pinMode(RELAY, OUTPUT);
   digitalWrite(RELAY, HIGH);
   eepromPrint();
@@ -335,6 +349,12 @@ void setup()
   //Load cards from EEPROM to variable
   viewCards();
   Serial.println(F("Approximate your card to the reader..."));
+
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 20);
+  display.print("Log in");
+  display.display();
 }
 void loop(){
   // Look for new cards
