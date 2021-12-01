@@ -20,13 +20,11 @@ byte cardCount = 1;
 byte lowestEmptyIndex;
 
 String cardString[4];
-//String cardName[] = {};
   
 boolean adminCard = false;
 boolean registered = false;
 
-#define OLED_RESET 4
-Adafruit_SSD1306 display(128,64,&Wire, -1);
+Adafruit_SSD1306 display(128, 64, &Wire, -1);
 
 #include <OLED_icons.h>
 
@@ -99,16 +97,22 @@ void getCardInfo(){
 }
 
 void getCardNumber(){
-  //display.fillRect(0,56,128,8,BLACK);
+  display.fillRect(0,56,128,8,BLACK);
+  display.setCursor(0,56);
   for(int i = 0; i < mfrc522.uid.size; i++){
     actualCard[i] = mfrc522.uid.uidByte[i];
+    //Possibly a problem with String() -> out of memory
     cardString[i] = String(actualCard[i], HEX);
     if(cardString[i].length() < 2){
       cardString[i] = "0" + String(actualCard[i], HEX);
     }
     cardString[i].toUpperCase();
-    Serial.print(cardString[i] + " ");
-    display.print(cardString[i]);
+    if(actualCard[i] < 0xF){
+      Serial.print('0');
+      display.print('0');
+    }
+    Serial.print(actualCard[i], HEX /*+ " "*/);
+    display.print(actualCard[i], HEX);
     display.display();
   }
 }
@@ -121,10 +125,10 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
     for(int y = i; y < i + 4; y++){
       if(EEPROM.read(y) == actualCard[y-i] && y == i){
         registered = true;
-        Serial.println("Byte " + String(y) + " OK");
+        Serial.println(F("OK"));
       }
       if(EEPROM.read(y) == actualCard[y-i] && y != i && registered){
-        Serial.println("Byte " + String(y) + " OK");
+        Serial.println(F("OK"));
       }
       if(EEPROM.read(y) != actualCard[y-i]){
         registered = false;
@@ -133,8 +137,13 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
     }
     if(registered){
       display.fillRect(0,56,128,8,BLACK);
-      display.print("Registered at: " + String(i / 4));
-      Serial.println("Card registered at the number of " + String(i / 4));
+      display.setCursor(0,56);
+      display.print("Registered at: " );
+      display.print(i/4);
+      display.display();
+      //
+      Serial.print("Card registered at: ");
+      Serial.println(i/4);
       for(int index = MAX_EEPROM - ADMIN_CARDS + 1; index <= MAX_EEPROM; index++){
         adminCard = EEPROM.read(index) == i/4;
         if(adminCard){
@@ -203,17 +212,40 @@ void addCard(){
 
 void viewCards(){
   //Loads the card nums from EEPROM
+  boolean zeroBeginning = false;
   for(byte i = 0; i < (MAX_EEPROM + 1 - ADMIN_CARDS) / 4; i++){
     for(byte y = 0; y < 4; y++){
       if(EEPROM.read((i*4)+y) == 0xFF){
-        ;
+        if(y == 0){
+          zeroBeginning = true;
+        }
       }
       else{
-        Serial.print("Index " + String(i) + ": ");
-        Serial.print(EEPROM.read((i*4)+y), HEX);
-        Serial.println();
+        if(y == 0){
+          Serial.print(F("Index "));
+          Serial.print(i);
+          Serial.print(F(": "));
+        }
+        if(y > 0 && zeroBeginning){
+          Serial.print(F("Card with zero beginning"));
+          Serial.print(F("Index "));
+          Serial.print(i);
+          Serial.print(F(": "));
+          for(byte z = 0; z <= y; z++){
+            Serial.print(EEPROM.read((i*4)+z), HEX);
+            Serial.print(' ');
+          }
+        }
+        if(!zeroBeginning){
+          Serial.print(EEPROM.read((i*4)+y), HEX);
+          Serial.print(' ');
+        }
+        if(y == 3){
+          Serial.println();
+        }
       }
     }
+    zeroBeginning = false;
   } 
 }
 
