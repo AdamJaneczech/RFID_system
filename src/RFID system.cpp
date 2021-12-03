@@ -2,18 +2,15 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <EEPROM.h>
-#include <Adafruit_SSD1306.h>
-#include <Adafruit_I2CDevice.h>
+#include <displayFunctions.h>
  
+#define BAUDRATE 115200
 #define SS_PIN 10
 #define RST_PIN 9
-#define BAUDRATE 115200
 #define RELAY 7
 #define ADMIN_CARDS 8
 #define MAX_EEPROM 1023
 #define MAX_CARDS (MAX_EEPROM+1)/4 - ADMIN_CARDS
-
-MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
 byte actualCard[4];
 byte cardCount = 1;
@@ -24,7 +21,7 @@ String cardString[4];
 boolean adminCard = false;
 boolean registered = false;
 
-Adafruit_SSD1306 display(128, 64, &Wire, -1);
+MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
 #include <OLED_icons.h>
 
@@ -97,8 +94,8 @@ void getCardInfo(){
 }
 
 void getCardNumber(){
-  display.fillRect(0,56,128,8,BLACK);
-  display.setCursor(0,56);
+  DISPLAY_NAME.fillRect(0,48,128-56,8,BLACK);
+  DISPLAY_NAME.setCursor(0,48);
   for(int i = 0; i < mfrc522.uid.size; i++){
     actualCard[i] = mfrc522.uid.uidByte[i];
     //Possibly a problem with String() -> out of memory
@@ -109,11 +106,11 @@ void getCardNumber(){
     cardString[i].toUpperCase();
     if(actualCard[i] < 0xF){
       Serial.print('0');
-      display.print('0');
+      DISPLAY_NAME.print('0');
     }
     Serial.print(actualCard[i], HEX /*+ " "*/);
-    display.print(actualCard[i], HEX);
-    display.display();
+    DISPLAY_NAME.print(actualCard[i], HEX);
+    DISPLAY_NAME.display();
   }
 }
 
@@ -136,11 +133,11 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
       }
     }
     if(registered){
-      display.fillRect(0,56,128,8,BLACK);
-      display.setCursor(0,56);
-      display.print("Registered at: " );
-      display.print(i/4);
-      display.display();
+      DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
+      DISPLAY_NAME.setCursor(0,56);
+      DISPLAY_NAME.print("Registered at: " );
+      DISPLAY_NAME.print(i/4);
+      DISPLAY_NAME.display();
       //
       Serial.print("Card registered at: ");
       Serial.println(i/4);
@@ -157,6 +154,9 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
     }
     if(!registered && i == MAX_EEPROM + 1 - ADMIN_CARDS * 4){
       Serial.println(F("Card not registered"));
+      DISPLAY_NAME.setCursor(0,56);
+      DISPLAY_NAME.print("Card not registered");
+      DISPLAY_NAME.display();
     }
   }
   //registered = false;
@@ -360,16 +360,21 @@ void setup()
   SPI.begin();      // Initiate  SPI bus
   mfrc522.PCD_Init();   // Initiate MFRC522
 
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  DISPLAY_NAME.begin(SSD1306_SWITCHCAPVCC, 0x3C);
 
-  display.clearDisplay();
-  display.drawBitmap(36,0,gymkrenLogo,56,56,BLACK, WHITE);
-  display.display();
+  DISPLAY_NAME.clearDisplay();
+  DISPLAY_NAME.drawBitmap(36,0,gymkrenLogo,56,56,BLACK, WHITE);
+  DISPLAY_NAME.display();
 
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(0, 56);
-  display.display();
+  for(int x = 36; x <= (128-56); x += 2){
+    DISPLAY_NAME.clearDisplay();
+    DISPLAY_NAME.drawBitmap(x,0,gymkrenLogo,56,56,BLACK, WHITE);
+    DISPLAY_NAME.display();
+  }
+
+  DISPLAY_NAME.setTextSize(1);
+  DISPLAY_NAME.setTextColor(WHITE);
+  DISPLAY_NAME.setCursor(0, 56);
 
   pinMode(RELAY, OUTPUT);
   digitalWrite(RELAY, HIGH);
@@ -377,19 +382,21 @@ void setup()
   Serial.println(MAX_CARDS);
   Serial.println(F("--RFID system--"));
   //
-  display.print("Getting card info");
-  display.display();
+  displayText("Getting card info");
+  Wire.flush();
   //
   getCardInfo();
   //
   Serial.print(F("Saved cards: "));
   Serial.println(cardCount);
   //
-  display.fillRect(0,56,128,8,BLACK);
-  display.setCursor(0, 56);
-  display.print("Saved cards: ");
-  display.print(cardCount);
-  display.display();
+  DISPLAY_NAME.drawRoundRect(0,0,64,20,2,WHITE);
+
+  printText("Login", 2, 2, 2, WHITE);
+  DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
+
+  printText("Saved cards: ", 0, 56, 1, WHITE);
+  displayText(cardCount);
 
   if(cardCount == 1){
     Serial.println(F("-- Administrator card only"));
@@ -401,12 +408,6 @@ void setup()
   //Load cards from EEPROM to variable
   viewCards();
   Serial.println(F("Approximate your card to the reader..."));
-
-  /*display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(0, 20);
-  display.print("Log in");
-  display.display();*/
 }
 void loop(){
   // Look for new cards
