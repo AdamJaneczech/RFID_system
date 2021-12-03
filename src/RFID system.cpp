@@ -50,7 +50,10 @@ void login(){
   digitalWrite(RELAY, LOW);
   Serial.println(F("Passed. Login OK"));
   cleanSerial();
-  while(!Serial.available() > 0){
+  DISPLAY_NAME.fillRect(0,0,128-56,20,BLACK);
+  DISPLAY_NAME.fillRoundRect(0,0,72,20,2,WHITE);
+  displayText("Active", 2, 2, 2, BLACK);
+  while(!Serial.available() > 0 && !mfrc522.PICC_IsNewCardPresent()){
     
   }
   logout();
@@ -62,6 +65,7 @@ void getCardInfo(){
   byte emptyFields = 0;
   byte emptyIndex = 0;
   Serial.println(F("Empty indexes:"));
+  DISPLAY_NAME.setCursor(0,56);
   while(loopCount <= MAX_EEPROM + 1 - ADMIN_CARDS * 4){ //EEPROM address -> card value has 4 8-bit numbers
     if(EEPROM.read(loopCount) == 0xFF){
       emptyFields++;
@@ -82,11 +86,15 @@ void getCardInfo(){
       emptyIndex = ((loopCount + 1) / 4) - 1;
       Serial.print(emptyIndex);
       Serial.print(' ');
-      if(loopCount % 32 == 0){
-        Serial.println();
-      }
       //Serial.println(", ");
       emptyFields = 0;    
+    }
+    if(loopCount % 8 == 0){
+        DISPLAY_NAME.drawPixel(loopCount/8, 63, WHITE);
+        DISPLAY_NAME.display();
+        if(loopCount % 32 == 0){
+          Serial.println();
+        }
     }
     loopCount++;
   }
@@ -95,6 +103,7 @@ void getCardInfo(){
 
 void getCardNumber(){
   DISPLAY_NAME.fillRect(0,48,128-56,8,BLACK);
+  DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
   DISPLAY_NAME.setCursor(0,48);
   for(int i = 0; i < mfrc522.uid.size; i++){
     actualCard[i] = mfrc522.uid.uidByte[i];
@@ -317,6 +326,11 @@ void isCardAdmin(){
     Serial.println(F("Make a card admin --2"));
     Serial.println(F("Delete an existing card by index --3"));
     Serial.println(F("View all cards --4"));
+
+    DISPLAY_NAME.fillRect(0,0,128-56,20,BLACK);
+    DISPLAY_NAME.fillRoundRect(0,0,64,20,2,WHITE);
+    displayText("Admin", 2, 2, 2, BLACK);
+
     delay(10);
     while(!Serial.available()){
       ;
@@ -366,26 +380,25 @@ void setup()
   DISPLAY_NAME.drawBitmap(36,0,gymkrenLogo,56,56,BLACK, WHITE);
   DISPLAY_NAME.display();
 
-  for(int x = 36; x <= (128-56); x += 2){
-    DISPLAY_NAME.clearDisplay();
-    DISPLAY_NAME.drawBitmap(x,0,gymkrenLogo,56,56,BLACK, WHITE);
-    DISPLAY_NAME.display();
-  }
-
   DISPLAY_NAME.setTextSize(1);
   DISPLAY_NAME.setTextColor(WHITE);
   DISPLAY_NAME.setCursor(0, 56);
 
   pinMode(RELAY, OUTPUT);
   digitalWrite(RELAY, HIGH);
+  //
   eepromPrint();
+  //
   Serial.println(MAX_CARDS);
   Serial.println(F("--RFID system--"));
   //
-  displayText("Getting card info");
-  Wire.flush();
-  //
   getCardInfo();
+  //Animate the logo
+  for(int x = 36; x <= (128-56); x += 4){
+    DISPLAY_NAME.fillRect(0, 0, x, 56, BLACK);
+    DISPLAY_NAME.drawBitmap(x,0,gymkrenLogo,56,56,BLACK, WHITE);
+    DISPLAY_NAME.display();
+  }
   //
   Serial.print(F("Saved cards: "));
   Serial.println(cardCount);

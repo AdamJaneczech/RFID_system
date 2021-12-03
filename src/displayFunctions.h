@@ -10,7 +10,7 @@ void clearDisplayLine(byte line, byte fontSize){
     
 }
 
-void printText(String text, uint8_t x, uint8_t y, uint8_t fontSize, uint8_t fontColor){
+void printText(char text [], uint8_t x, uint8_t y, uint8_t fontSize, uint8_t fontColor){
     DISPLAY_NAME.setTextSize(fontSize);
     DISPLAY_NAME.setTextColor(fontColor);
     DISPLAY_NAME.setCursor(x, y);
@@ -24,7 +24,7 @@ void printText(int text, uint8_t x, uint8_t y, uint8_t fontSize, uint8_t fontCol
     DISPLAY_NAME.print(text);
 }
 
-void printText(String text, uint8_t x, uint8_t y){
+void printText(char text[], uint8_t x, uint8_t y){
     DISPLAY_NAME.setCursor(x, y);
     DISPLAY_NAME.print(text);
 }
@@ -32,6 +32,11 @@ void printText(String text, uint8_t x, uint8_t y){
 void printText(int text, uint8_t x, uint8_t y){
     DISPLAY_NAME.setCursor(x, y);
     DISPLAY_NAME.print(text);
+}
+
+void displayText(char text [], uint8_t x, uint8_t y, uint8_t fontSize, uint8_t fontColor){
+    printText(text, x, y, fontSize, fontColor);
+    DISPLAY_NAME.display();
 }
 
 void displayText(char text[]){
