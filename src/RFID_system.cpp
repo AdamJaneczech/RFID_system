@@ -2,15 +2,12 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <EEPROM.h>
-#include <displayFunctions.h>
- 
-#define BAUDRATE 115200
-#define SS_PIN 10
-#define RST_PIN 9
-#define RELAY 7
-#define ADMIN_CARDS 8
-#define MAX_EEPROM 1023
-#define MAX_CARDS (MAX_EEPROM+1)/4 - ADMIN_CARDS
+
+#include <Config.h>
+
+#include <ControlButtons.h>
+#include <OLED_icons.h>
+#include <DisplayFunctions.h>
 
 byte actualCard[4];
 byte cardCount = 1;
@@ -22,8 +19,6 @@ boolean adminCard = false;
 boolean registered = false;
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
-
-#include <OLED_icons.h>
 
 void eepromPrint(){
   Serial.println(F("Memory map:"));
@@ -49,11 +44,12 @@ void logout(){
 void login(){
   digitalWrite(RELAY, LOW);
   Serial.println(F("Passed. Login OK"));
+  allowed = true;
   cleanSerial();
   DISPLAY_NAME.fillRect(0,0,128-56,20,BLACK);
   DISPLAY_NAME.fillRoundRect(0,0,72,20,2,WHITE);
   displayText("Active", 2, 2, 2, BLACK);
-  while(!Serial.available() > 0 && !mfrc522.PICC_IsNewCardPresent()){
+  while(!Serial.available() > 0 && allowed){
     
   }
   logout();
@@ -421,6 +417,8 @@ void setup()
   //Load cards from EEPROM to variable
   viewCards();
   Serial.println(F("Approximate your card to the reader..."));
+  
+  interruptConfig();
 }
 void loop(){
   // Look for new cards

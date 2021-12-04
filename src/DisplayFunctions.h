@@ -2,8 +2,6 @@
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_I2CDevice.h>
 
-#define DISPLAY_NAME display
-
 Adafruit_SSD1306 DISPLAY_NAME(128, 64, &Wire, -1);
 
 void clearDisplayLine(byte line, byte fontSize){
