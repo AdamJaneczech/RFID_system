@@ -18,3 +18,5 @@
 #define RELAY 9
 //OLED display name
 #define DISPLAY_NAME display
+//Create MFRC522 instance
+MFRC522 mfrc522(SS_PIN, RST_PIN);   

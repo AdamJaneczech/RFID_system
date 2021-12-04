@@ -3,13 +3,8 @@
 #include <MFRC522.h>
 #include <EEPROM.h>
 
-#include <Config.h>
-
-#include <ControlButtons.h>
-#include <OLED_icons.h>
-#include <DisplayFunctions.h>
-
 byte actualCard[4];
+byte actualCardIndex;
 byte cardCount = 1;
 byte lowestEmptyIndex;
 
@@ -18,7 +13,11 @@ String cardString[4];
 boolean adminCard = false;
 boolean registered = false;
 
-MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
+#include <Config.h>
+
+#include <ControlButtons.h>
+#include <OLED_icons.h>
+#include <DisplayFunctions.h>
 
 void eepromPrint(){
   Serial.println(F("Memory map:"));
@@ -38,6 +37,7 @@ void cleanSerial(){
 
 void logout(){
   digitalWrite(RELAY, HIGH);
+  homeScreen();
   Serial.println(F("Logout"));
 }
 
@@ -138,14 +138,15 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
       }
     }
     if(registered){
+      actualCardIndex = i/4;
       DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
       DISPLAY_NAME.setCursor(0,56);
       DISPLAY_NAME.print("Registered at: " );
-      DISPLAY_NAME.print(i/4);
+      DISPLAY_NAME.print(actualCardIndex);
       DISPLAY_NAME.display();
       //
       Serial.print("Card registered at: ");
-      Serial.println(i/4);
+      Serial.println(actualCardIndex);
       for(int index = MAX_EEPROM - ADMIN_CARDS + 1; index <= MAX_EEPROM; index++){
         adminCard = EEPROM.read(index) == i/4;
         if(adminCard){
@@ -306,9 +307,6 @@ void makeCardAdmin(){
       Serial.println("No more admin card capacity");
     }
   }
-  //adminCards[] = cardIndex;
-  //Serial.println(cardIndex);
-  //Serial.println("makeCardAdmin");
 }
 
 void isCardAdmin(){
@@ -399,13 +397,7 @@ void setup()
   Serial.print(F("Saved cards: "));
   Serial.println(cardCount);
   //
-  DISPLAY_NAME.drawRoundRect(0,0,64,20,2,WHITE);
-
-  printText("Login", 2, 2, 2, WHITE);
-  DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
-
-  printText("Saved cards: ", 0, 56, 1, WHITE);
-  displayText(cardCount);
+  homeScreen(true);
 
   if(cardCount == 1){
     Serial.println(F("-- Administrator card only"));
