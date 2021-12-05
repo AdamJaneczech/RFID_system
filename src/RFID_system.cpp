@@ -7,11 +7,14 @@ byte actualCard[4];
 byte actualCardIndex;
 byte cardCount = 1;
 byte lowestEmptyIndex;
+byte option = 0;
 
 String cardString[4];
   
 boolean adminCard = false;
 boolean registered = false;
+
+const char PROGMEM adminOptions [][10] = {"Login", "Add ID", "Add admin", "Delete ID"};
 
 #include <Config.h>
 
@@ -313,6 +316,8 @@ void isCardAdmin(){
   if(adminCard){
     cleanSerial();
 
+    boolean noChar = false;
+
     Serial.println(F("Administrator card inserted"));
     Serial.println(F("---------------------------"));
     Serial.println(F("Login --0"));
@@ -325,10 +330,29 @@ void isCardAdmin(){
     DISPLAY_NAME.fillRoundRect(0,0,64,20,2,WHITE);
     displayText("Admin", 2, 2, 2, BLACK);
 
+    DISPLAY_NAME.drawRoundRect(0,22,68,20,2,WHITE);
+    DISPLAY_NAME.setCursor(2, 22);
+    DISPLAY_NAME.setTextColor(WHITE);
+    for(uint8_t size = 1; !noChar; size++){
+      if(adminOptions[option][size] == 0){
+        noChar = true;
+      }
+      Serial.print("SIZE: ");
+      Serial.println(size);
+    }
+    for(uint8_t u = 0; u <= 5 /*&& condition for interrupt*/; u++){ //5 characters fo fit in the box
+      DISPLAY_NAME.write(adminOptions[option][u]);
+    }
+    /*for(uint8_t i = 0; */
+    DISPLAY_NAME.write(65);
+    DISPLAY_NAME.display();
+
+
     delay(10);
     while(!Serial.available()){
       ;
     }
+
     byte reading;
     while(Serial.available() > 0){  //!!!
       reading = Serial.read() - 48; //Just 1 digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)
@@ -378,6 +402,20 @@ void setup()
   DISPLAY_NAME.setTextColor(WHITE);
   DISPLAY_NAME.setCursor(0, 56);
 
+  for(uint8_t u = 0; u <= 9*8; u++){
+    DISPLAY_NAME.fillRect(0,0,128,8,BLACK);
+    DISPLAY_NAME.setCursor(0-u, 0);
+    DISPLAY_NAME.print("test text");
+    DISPLAY_NAME.fillRect(32,0,96,8,BLACK);
+    DISPLAY_NAME.display();
+    //delay(100);
+  }
+  Serial.println(boolean(adminOptions[0][2]));
+  for(byte i = 0; i < 10; i++){
+    Serial.println(adminOptions[0][9], HEX);
+  }
+  DISPLAY_NAME.print(adminOptions[1]);
+
   pinMode(RELAY, OUTPUT);
   digitalWrite(RELAY, HIGH);
   //
@@ -402,7 +440,6 @@ void setup()
   if(cardCount == 1){
     Serial.println(F("-- Administrator card only"));
   }
-  Serial.println(F("Cards loaded: "));
   if(cardCount < 1){
     Serial.println(F("no cards loaded"));
   }
@@ -433,5 +470,6 @@ void loop(){
   //Check if the inserted card has admin permissions:
   isCardAdmin();
   //
+  DISPLAY_NAME.dim(true);
   delay(2000);
 }
