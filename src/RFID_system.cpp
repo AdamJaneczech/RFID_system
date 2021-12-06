@@ -13,8 +13,9 @@ String cardString[4];
   
 boolean adminCard = false;
 boolean registered = false;
+boolean adminMenu = false;
 
-const char PROGMEM adminOptions [][10] = {"Login", "Add ID", "Add admin", "Delete ID"};
+char *adminOptions[] = {"Login|", "Add ID|", "Add admin|", "Delete ID|"};
 
 #include <Config.h>
 
@@ -144,11 +145,11 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
       actualCardIndex = i/4;
       DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
       DISPLAY_NAME.setCursor(0,56);
-      DISPLAY_NAME.print("Registered at: " );
+      DISPLAY_NAME.print(F("Registered at: " ));
       DISPLAY_NAME.print(actualCardIndex);
       DISPLAY_NAME.display();
       //
-      Serial.print("Card registered at: ");
+      Serial.print(F("Card registered at: "));
       Serial.println(actualCardIndex);
       for(int index = MAX_EEPROM - ADMIN_CARDS + 1; index <= MAX_EEPROM; index++){
         adminCard = EEPROM.read(index) == i/4;
@@ -164,7 +165,7 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
     if(!registered && i == MAX_EEPROM + 1 - ADMIN_CARDS * 4){
       Serial.println(F("Card not registered"));
       DISPLAY_NAME.setCursor(0,56);
-      DISPLAY_NAME.print("Card not registered");
+      DISPLAY_NAME.print(F("Card not registered"));
       DISPLAY_NAME.display();
     }
   }
@@ -184,7 +185,6 @@ void addCard(){
     ;
   }
   //Check if the card is registered
-  Serial.println("APPROX ok");
   getCardNumber();
   getCardInfo();
   isCardRegistered();
@@ -307,7 +307,7 @@ void makeCardAdmin(){
       break;
     }
     else if(a == MAX_EEPROM){
-      Serial.println("No more admin card capacity");
+      Serial.println(F("No more admin card capacity"));
     }
   }
 }
@@ -317,6 +317,8 @@ void isCardAdmin(){
     cleanSerial();
 
     boolean noChar = false;
+    adminMenu = true;
+    option = 0;
 
     Serial.println(F("Administrator card inserted"));
     Serial.println(F("---------------------------"));
@@ -333,29 +335,32 @@ void isCardAdmin(){
     DISPLAY_NAME.drawRoundRect(0,22,68,20,2,WHITE);
     DISPLAY_NAME.setCursor(2, 22);
     DISPLAY_NAME.setTextColor(WHITE);
-    for(uint8_t size = 1; !noChar; size++){
-      if(adminOptions[option][size] == 0){
-        noChar = true;
-      }
-      Serial.print("SIZE: ");
-      Serial.println(size);
-    }
-    for(uint8_t u = 0; u <= 5 /*&& condition for interrupt*/; u++){ //5 characters fo fit in the box
-      DISPLAY_NAME.write(adminOptions[option][u]);
-    }
-    /*for(uint8_t i = 0; */
-    DISPLAY_NAME.write(65);
+    DISPLAY_NAME.print(adminOptions[option]);
     DISPLAY_NAME.display();
 
-
-    delay(10);
-    while(!Serial.available()){
-      ;
+    byte prevOption = option;
+    option++;
+    while(!Serial.available() && adminMenu){
+      if(prevOption != option){
+        printText(adminOptions[option], 2, 22, 2, WHITE);
+        //for loop for determineing the option size (divided with '|')
+        uint8_t optionLength = 0;
+        while(adminOptions[option][optionLength] != '|'){
+          optionLength++;
+        }
+        Serial.print("Option length: ");
+        Serial.println(optionLength);
+        //
+        if(optionLength > 5){
+          clearDisplayLine(2,2);
+        }
+      }
     }
 
     byte reading;
     while(Serial.available() > 0){  //!!!
       reading = Serial.read() - 48; //Just 1 digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)
+      adminMenu = false;
     }
 
     cleanSerial(); //Added this loop because of ASCII line break command
@@ -401,19 +406,18 @@ void setup()
   DISPLAY_NAME.setTextSize(1);
   DISPLAY_NAME.setTextColor(WHITE);
   DISPLAY_NAME.setCursor(0, 56);
-
-  for(uint8_t u = 0; u <= 9*8; u++){
+  //test scroll text
+  /*for(uint8_t u = 0; u <= 9*8; u++){
     DISPLAY_NAME.fillRect(0,0,128,8,BLACK);
     DISPLAY_NAME.setCursor(0-u, 0);
     DISPLAY_NAME.print("test text");
     DISPLAY_NAME.fillRect(32,0,96,8,BLACK);
     DISPLAY_NAME.display();
-    //delay(100);
-  }
-  Serial.println(boolean(adminOptions[0][2]));
-  for(byte i = 0; i < 10; i++){
-    Serial.println(adminOptions[0][9], HEX);
-  }
+  }*/
+  
+  //Admin options
+  
+  //
   DISPLAY_NAME.print(adminOptions[1]);
 
   pinMode(RELAY, OUTPUT);
@@ -448,6 +452,8 @@ void setup()
   Serial.println(F("Approximate your card to the reader..."));
   
   interruptConfig();
+
+  DISPLAY_NAME.dim(true);
 }
 void loop(){
   // Look for new cards
@@ -470,6 +476,5 @@ void loop(){
   //Check if the inserted card has admin permissions:
   isCardAdmin();
   //
-  DISPLAY_NAME.dim(true);
   delay(2000);
 }
