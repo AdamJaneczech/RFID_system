@@ -318,7 +318,7 @@ void isCardAdmin(){
 
     boolean noChar = false;
     adminMenu = true;
-    option = 0;
+    option = 1;
 
     Serial.println(F("Administrator card inserted"));
     Serial.println(F("---------------------------"));
@@ -339,7 +339,8 @@ void isCardAdmin(){
     DISPLAY_NAME.display();
 
     byte prevOption = option;
-    option++;
+    option++; //tentative -> for testing only
+
     while(!Serial.available() && adminMenu){
       if(prevOption != option){
         printText(adminOptions[option], 2, 22, 2, WHITE);
@@ -348,12 +349,23 @@ void isCardAdmin(){
         while(adminOptions[option][optionLength] != '|'){
           optionLength++;
         }
-        Serial.print("Option length: ");
-        Serial.println(optionLength);
         //
         if(optionLength > 5){
-          clearDisplayLine(2,2);
+          for(byte i = 0; i <= (optionLength - 5) * 12; i++){ //space for 5 letters
+            DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
+            DISPLAY_NAME.setCursor(2-i, 22);
+            DISPLAY_NAME.setTextColor(WHITE);
+            for(byte x = 0; x < optionLength; x++){
+              DISPLAY_NAME.print(adminOptions[option][x]);
+            }
+            DISPLAY_NAME.fillRect(62,22,68,20,BLACK);
+            DISPLAY_NAME.drawRoundRect(0,22,64,20,2,WHITE);
+            DISPLAY_NAME.drawBitmap(72,0,gymkrenLogo,56,56,BLACK, WHITE);
+            DISPLAY_NAME.display();
+          }
         }
+        //
+      prevOption = option;
       }
     }
 
@@ -418,8 +430,6 @@ void setup()
   //Admin options
   
   //
-  DISPLAY_NAME.print(adminOptions[1]);
-
   pinMode(RELAY, OUTPUT);
   digitalWrite(RELAY, HIGH);
   //
