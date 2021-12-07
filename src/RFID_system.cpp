@@ -56,7 +56,7 @@ void login(){
   while(!Serial.available() > 0 && allowed){
     
   }
-  logout();
+  //logout();
 }
 
 void getCardInfo(){
@@ -367,38 +367,35 @@ void isCardAdmin(){
         //
       prevOption = option;
       }
+      if(Serial.available() > 0){ //in case of serial input
+          option = Serial.read() - 48; //Just 1st digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)
+          cleanSerial(); //Added this loop because of ASCII line break command
+      }
     }
-
-    byte reading;
-    while(Serial.available() > 0){  //!!!
-      reading = Serial.read() - 48; //Just 1 digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)
-      adminMenu = false;
-    }
-
-    cleanSerial(); //Added this loop because of ASCII line break command
-
-    Serial.println(reading);
-    //byte readByte = reading.toInt();
-    switch(reading){
-      case 0:
-        login();
-        break;
-      case 1: 
-        addCard();
-        break;
-      case 2:
-        viewCards();
-        makeCardAdmin();
-        break;
-      case 3:
-        viewCards();
-        deleteCards();
-        break; 
-      case 4:
-        viewCards();
-        break;
-      default:
-        Serial.print("No option for value: " + String(reading));
+    //Here, code after interrupt (OK_BUTTON) happens
+    Serial.println(option);
+    if(adminCard){
+      switch(option){
+        case 0:
+          login();
+          break;
+        case 1: 
+          addCard();
+          break;
+        case 2:
+          viewCards();
+          makeCardAdmin();
+          break;
+        case 3:
+          viewCards();
+          deleteCards();
+          break; 
+        case 4:
+          viewCards();
+          break;
+        default:
+          Serial.print("No option for value: " + String(option));
+      }
     }
   }
 }
