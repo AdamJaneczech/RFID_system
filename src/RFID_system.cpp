@@ -461,6 +461,11 @@ void setup()
   interruptConfig();
 
   DISPLAY_NAME.dim(true);
+
+  byte a = 128;
+  a = a << 2;
+  Serial.print("a: ");
+  Serial.println(a);
 }
 void loop(){
   // Look for new cards

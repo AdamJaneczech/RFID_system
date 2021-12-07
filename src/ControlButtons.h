@@ -3,6 +3,8 @@
 
 boolean allowed = false;
 
+void logout(void);
+
 ISR(PCINT0_vect){   //STOP_BUTTON
     cli();
     if(allowed || adminMenu){
@@ -16,25 +18,24 @@ ISR(PCINT0_vect){   //STOP_BUTTON
     sei();
 }
 
-ISR(PCINT20_vect){  //OK_BUTTON
+ISR(PCINT2_vect){  //Control buttons
     cli();
-    if(adminMenu){
-        adminMenu = false;
+    //alternative if statement
+    Serial.println(PORTB, BIN);
+    byte bitCheck = PORTB >> 2;
+    Serial.println(bitCheck, BIN);
+    bitCheck = bitCheck << 7;
+    Serial.println(bitCheck, BIN);
+    if(PORTB == PORTB ^ (1<<PB4)){
+        Serial.println("OK");
     }
-    sei();
-}
-
-ISR(PCINT22_vect){  //UP_BUTTON
-    cli();
-    //alternative if statement
-    option = (option == 4)? option = 4: option++;
-    sei();
-}
-
-ISR(PCINT23_vect){  //DOWN_BUTTON
-    cli();
-    //alternative if statement
-    option = (option == 0)? option = 0: option++;
+    if(PORTB == PORTB ^ (1<<PB6)){
+        Serial.println("UP");    
+    }
+    if(PORTB == PORTB ^ (1<<PB7)){
+        Serial.println("DOWN");
+    }
+    //option = (option == 4)? option = 4: option++;
     sei();
 }
 

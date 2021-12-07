@@ -10,10 +10,10 @@
 #define MAX_EEPROM 1023
 #define MAX_CARDS (MAX_EEPROM+1)/4 - ADMIN_CARDS
 //Button configuration
-#define UP_BUTTON PCINT22
-#define DOWN_BUTTON PCINT23
-#define OK_BUTTON PCINT20
-#define STOP_BUTTON PCINT0
+#define UP_BUTTON PD6
+#define DOWN_BUTTON PD7
+#define OK_BUTTON PD4
+#define STOP_BUTTON PB0
 //Relay pin
 #define RELAY 9
 //OLED display name
