@@ -21,18 +21,17 @@ ISR(PCINT0_vect){   //STOP_BUTTON
 ISR(PCINT2_vect){  //Control buttons
     cli();
     //alternative if statement
-    Serial.println(PORTB, BIN);
-    byte bitCheck = PORTB >> 2;
+    Serial.println(PORTD, BIN);
+    byte bitCheck = PORTD >> 4; //shift PORTD value 4 right -> PD4 at first place, PD7 at 4th place
+    bitCheck &= ~(1<<PD5);  //write 0 to the bin place of PD5 (RFID module pin -> not interested)
     Serial.println(bitCheck, BIN);
-    bitCheck = bitCheck << 7;
-    Serial.println(bitCheck, BIN);
-    if(PORTB == PORTB ^ (1<<PB4)){
+    if(bitCheck == 0b1){
         Serial.println("OK");
     }
-    if(PORTB == PORTB ^ (1<<PB6)){
+    else if(bitCheck == 0b100){
         Serial.println("UP");    
     }
-    if(PORTB == PORTB ^ (1<<PB7)){
+    else if(bitCheck == 0b1000){
         Serial.println("DOWN");
     }
     //option = (option == 4)? option = 4: option++;
