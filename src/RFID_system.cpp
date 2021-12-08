@@ -14,6 +14,7 @@ String cardString[4];
 boolean adminCard = false;
 boolean registered = false;
 boolean adminMenu = false;
+boolean pressed = false;
 
 char *adminOptions[] = {"Login|", "Add ID|", "Add admin|", "Delete ID|"};
 
@@ -318,7 +319,7 @@ void isCardAdmin(){
 
     boolean noChar = false;
     adminMenu = true;
-    option = 1;
+    option = 0;
 
     Serial.println(F("Administrator card inserted"));
     Serial.println(F("---------------------------"));
@@ -338,34 +339,36 @@ void isCardAdmin(){
     DISPLAY_NAME.print(adminOptions[option]);
     DISPLAY_NAME.display();
 
-    byte prevOption = option;
-    option++; //tentative -> for testing only
+    byte prevOption = 1;
+    uint8_t optionLength = 0;
+    //option++; //tentative -> for testing only
 
     while(!Serial.available() && adminMenu){
       if(prevOption != option){
+        Serial.println("CONDITION");
+        optionLength = 0;
         printText(adminOptions[option], 2, 22, 2, WHITE);
         //for loop for determineing the option size (divided with '|')
-        uint8_t optionLength = 0;
         while(adminOptions[option][optionLength] != '|'){
           optionLength++;
         }
-        //
-        if(optionLength > 5){
-          for(byte i = 0; i <= (optionLength - 5) * 12; i++){ //space for 5 letters
-            DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
-            DISPLAY_NAME.setCursor(2-i, 22);
-            DISPLAY_NAME.setTextColor(WHITE);
-            for(byte x = 0; x < optionLength; x++){
-              DISPLAY_NAME.print(adminOptions[option][x]);
-            }
-            DISPLAY_NAME.fillRect(62,22,68,20,BLACK);
-            DISPLAY_NAME.drawRoundRect(0,22,64,20,2,WHITE);
-            DISPLAY_NAME.drawBitmap(72,0,gymkrenLogo,56,56,BLACK, WHITE);
-            DISPLAY_NAME.display();
+        prevOption = option;
+        Serial.println(optionLength);
+      }
+      if(optionLength >= 5){
+        for(byte i = 0; i <= (optionLength - 5) * 12 && adminMenu && prevOption == option; i++){ //space for 5 letters
+          DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
+          DISPLAY_NAME.setCursor(2-i, 22);
+          DISPLAY_NAME.setTextColor(WHITE);
+          for(byte x = 0; x < optionLength; x++){
+            DISPLAY_NAME.print(adminOptions[option][x]);
           }
+          DISPLAY_NAME.fillRect(62,22,68,20,BLACK);
+          DISPLAY_NAME.drawRoundRect(0,22,64,20,2,WHITE);
+          DISPLAY_NAME.drawBitmap(72,0,gymkrenLogo,56,56,BLACK, WHITE);
+          DISPLAY_NAME.display();
         }
-        //
-      prevOption = option;
+        //LOOP -> add here
       }
       if(Serial.available() > 0){ //in case of serial input
           option = Serial.read() - 48; //Just 1st digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)

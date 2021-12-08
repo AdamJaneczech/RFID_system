@@ -25,14 +25,23 @@ ISR(PCINT2_vect){  //Control buttons
     Serial.println(PIND, BIN);
     byte bitCheck = (PIND &= ~(1 << PD5)) >> 4; //shift PIND value 4 right -> PD4 at first place, PD7 at 4th place
     Serial.println(bitCheck, BIN);
-    if(bitCheck == 0b1){
-        Serial.println("OK");
-    }
-    else if(bitCheck == 0b100){
-        Serial.println("UP");    
-    }
-    else if(bitCheck == 0b1000){
-        Serial.println("DOWN");
+    pressed ^= pressed;
+    if(!pressed){    
+        if(bitCheck == 0b1){
+            Serial.println("OK");
+        }
+        else if(bitCheck == 0b100){
+            Serial.println("UP");
+            if(option < 3){
+                option++;
+            } 
+        }
+        else if(bitCheck == 0b1000){
+            Serial.println("DOWN");
+            if(option > 0){
+                option--;
+            } 
+        }
     }
     sei();
 }
