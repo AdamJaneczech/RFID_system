@@ -4,15 +4,16 @@
 boolean allowed = false;
 
 void logout(void);
+void homeScreen(void);
 
 ISR(PCINT0_vect){   //STOP_BUTTON
     cli();
+    Serial.println("STOP");
     if(allowed || adminMenu){
         allowed = false;
         adminMenu = false;
         adminCard = false; //if STOP_BUTTON is pushed during admin option selection, the next condition won't be fulfilles 
         digitalWrite(RELAY, HIGH);
-        logout();
         delay(100);
     }
     sei();
@@ -22,7 +23,7 @@ ISR(PCINT2_vect){  //Control buttons
     cli();
     //alternative if statement
     Serial.println(PIND, BIN);
-    byte bitCheck = (PIND &= ~(1 << PD5)) >> 4; //shift PORTD value 4 right -> PD4 at first place, PD7 at 4th place
+    byte bitCheck = (PIND &= ~(1 << PD5)) >> 4; //shift PIND value 4 right -> PD4 at first place, PD7 at 4th place
     Serial.println(bitCheck, BIN);
     if(bitCheck == 0b1){
         Serial.println("OK");
@@ -33,7 +34,6 @@ ISR(PCINT2_vect){  //Control buttons
     else if(bitCheck == 0b1000){
         Serial.println("DOWN");
     }
-    //option = (option == 4)? option = 4: option++;
     sei();
 }
 

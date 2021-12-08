@@ -56,7 +56,7 @@ void login(){
   while(!Serial.available() > 0 && allowed){
     
   }
-  //logout();
+  logout();
 }
 
 void getCardInfo(){
@@ -396,6 +396,9 @@ void isCardAdmin(){
         default:
           Serial.print("No option for value: " + String(option));
       }
+    }
+    else{
+      logout();
     }
   }
 }
