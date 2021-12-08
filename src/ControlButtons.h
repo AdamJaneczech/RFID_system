@@ -21,9 +21,8 @@ ISR(PCINT0_vect){   //STOP_BUTTON
 ISR(PCINT2_vect){  //Control buttons
     cli();
     //alternative if statement
-    Serial.println(PORTD, BIN);
-    byte bitCheck = PORTD >> 4; //shift PORTD value 4 right -> PD4 at first place, PD7 at 4th place
-    bitCheck &= ~(1<<PD5);  //write 0 to the bin place of PD5 (RFID module pin -> not interested)
+    Serial.println(PIND, BIN);
+    byte bitCheck = (PIND &= ~(1 << PD5)) >> 4; //shift PORTD value 4 right -> PD4 at first place, PD7 at 4th place
     Serial.println(bitCheck, BIN);
     if(bitCheck == 0b1){
         Serial.println("OK");
