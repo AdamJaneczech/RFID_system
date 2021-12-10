@@ -29,6 +29,12 @@ ISR(PCINT2_vect){  //Control buttons
     if(!pressed){    
         if(bitCheck == 0b1){
             Serial.println("OK");
+            if(adminMenu){
+                adminMenu = false;
+            }
+            else{
+                option = 0;
+            }
         }
         else if(bitCheck == 0b100){
             Serial.println("UP");

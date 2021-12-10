@@ -103,6 +103,7 @@ void getCardInfo(){
 }
 
 void getCardNumber(){
+  clearDisplayLine(7,1);
   DISPLAY_NAME.fillRect(0,48,128-56,8,BLACK);
   DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
   DISPLAY_NAME.setCursor(0,48);
@@ -164,9 +165,9 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
       break;
     }
     if(!registered && i == MAX_EEPROM + 1 - ADMIN_CARDS * 4){
-      Serial.println(F("Card not registered"));
+      Serial.println(F("ID not yet registered"));
       DISPLAY_NAME.setCursor(0,56);
-      DISPLAY_NAME.print(F("Card not registered"));
+      DISPLAY_NAME.print(F("ID not yet registered"));
       DISPLAY_NAME.display();
     }
   }
@@ -175,6 +176,8 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
 
 void addCard(){
   Serial.println(F("Approximate new card to the reader..."));
+  clearDisplayLine(6,2);
+  displayText("Approach the new card", 0, 56, 1, WHITE);
   // Look for new cards
   while( ! mfrc522.PICC_IsNewCardPresent()) 
   {
@@ -193,7 +196,7 @@ void addCard(){
   if(!registered){  //EEPROM direct reading -> modify here
     Serial.println(F("New card number: "));
     for(int i = 0; i < mfrc522.uid.size; i++){
-      if(cardCount < 240){  //MODIFY
+      if(cardCount < ((MAX_EEPROM + 1) / 4) - ADMIN_CARDS){
         EEPROM.write((lowestEmptyIndex) * 4 + i, mfrc522.uid.uidByte[i]); //5th position in EEPROM determines the admin attribute
       }
       //--Print String card number--
@@ -201,11 +204,15 @@ void addCard(){
       cardString[i] = String(actualCard[i], HEX);
       if(cardString[i].length() < 2){
         cardString[i] = "0" + String(actualCard[i], HEX);
+        printText("0", 0, 48);
       }
       cardString[i].toUpperCase();
       Serial.print(cardString[i] + " ");
+      printText((actualCard[i], HEX), 0, 48, 1, WHITE);
       //----//
     }
+    DISPLAY_NAME.display();
+    DISPLAY_NAME.flush();
     Serial.print(F("Card "));
     for(int i = 0; i < 4; i++){
       Serial.println(cardString[i] + " ");
@@ -213,6 +220,13 @@ void addCard(){
     Serial.println("stored as number " + String(lowestEmptyIndex) + " in the database.");
     cardCount++;
     Serial.println("Actual number of stored cards: " + String(cardCount)); 
+    clearDisplayLine(7,1);
+    printText("New card index: ", 0, 56, 1, WHITE);
+    displayText(lowestEmptyIndex);
+    DISPLAY_NAME.flush();
+    while(adminMenu){
+      ;
+    }
   }
   //If the card IS registered
   else if(registered){
@@ -375,6 +389,7 @@ void isCardAdmin(){
           cleanSerial(); //Added this loop because of ASCII line break command
       }
     }
+    adminMenu = true; //prepare for the next menu level
     //Here, code after interrupt (OK_BUTTON) happens
     Serial.println(option);
     if(adminCard){

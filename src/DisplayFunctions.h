@@ -5,7 +5,10 @@
 Adafruit_SSD1306 DISPLAY_NAME(128, 64, &Wire, -1);
 
 void clearDisplayLine(byte line, byte fontSize){
-    DISPLAY_NAME.fillRect(0,line * 8 * fontSize,128,fontSize * 8,BLACK);
+    DISPLAY_NAME.fillRect(0,line * 8,128,fontSize * 8,BLACK);
+    if(line < 7){
+        DISPLAY_NAME.drawBitmap(128-56,0,gymkrenLogo,56,56,BLACK, WHITE);
+    }
     DISPLAY_NAME.display();
 }
 
