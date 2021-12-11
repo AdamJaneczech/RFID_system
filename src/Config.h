@@ -1,5 +1,5 @@
-#include <Arduino.h>
-
+#include <avr/io.h>
+#include <avr/interrupt.h>
 //Serial communication baud rate
 #define BAUDRATE 115200
 //MFRC522 SPI pins
@@ -19,4 +19,4 @@
 //OLED display name
 #define DISPLAY_NAME display
 //Create MFRC522 instance
-MFRC522 mfrc522(SS_PIN, RST_PIN);   
+MFRC522 mfrc522(SS_PIN, RST_PIN);

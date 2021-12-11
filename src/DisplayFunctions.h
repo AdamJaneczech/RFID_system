@@ -4,6 +4,21 @@
 
 Adafruit_SSD1306 DISPLAY_NAME(128, 64, &Wire, -1);
 
+//Display dim timer setup
+void displayDimSetup(){
+    TCCR1A = 0;
+    TCCR1B = 0;
+    TCNT1  = 0; //counter value = 0
+    TCCR1B |= (1 << WGM12)|(1 << CS12)|(1 << CS10);    //set the waveform generation mode & prescaler to clk/1024 (datasheet)
+    OCR1A |= 62500; //4-second interval
+    TIMSK1 |= 1 << OCIE1A;
+}
+
+ISR(TIMER1_COMPA_vect){
+    Serial.println("dim");
+    //DISPLAY_NAME.dim(true);
+}
+
 void clearDisplayLine(byte line, byte fontSize){
     DISPLAY_NAME.fillRect(0,line * 8,128,fontSize * 8,BLACK);
     if(line < 7){

@@ -480,8 +480,8 @@ void setup()
   Serial.println(F("Approximate your card to the reader..."));
   
   interruptConfig();
-
-  DISPLAY_NAME.dim(true);
+  displayDimSetup();
+  //DISPLAY_NAME.dim(true);
 
   byte a = 128;
   a = a << 2;
