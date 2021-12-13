@@ -15,8 +15,10 @@ void displayDimSetup(){
 }
 
 ISR(TIMER1_COMPA_vect){
+    cli();  //disable interrupts
     Serial.println("dim");
-    //DISPLAY_NAME.dim(true);
+    DISPLAY_NAME.dim(true);
+    sei();  //enable interrupts
 }
 
 void clearDisplayLine(byte line, byte fontSize){

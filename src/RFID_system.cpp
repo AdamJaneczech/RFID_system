@@ -3,33 +3,34 @@
 #include <MFRC522.h>
 #include <EEPROM.h>
 
-byte actualCard[4];
-byte actualCardIndex;
-byte cardCount = 1;
-byte lowestEmptyIndex;
-byte option = 0;
+byte actualCard[4]; //variable for storing the active card number
+byte actualCardIndex; //variable for storing the actual card index
+byte cardCount = 1; //variable for storing the amount of loaded cards
+byte lowestEmptyIndex;  //the lowest index for storing a card into EEPROM is saved in this variable
+byte option = 0;  //selected option - aadmin menu
 
-String cardString[4];
+String cardString[4]; //the active card number converted to string
   
-boolean adminCard = false;
-boolean registered = false;
-boolean adminMenu = false;
-boolean pressed = false;
+boolean adminCard = false;  //determine whether the card is admin
+boolean registered = false; //determine whether the card is registered
+boolean adminMenu = false;  //activating/closing the admin menu
+boolean pressed = false;  //PCINT generates 2 interrupts (rising/falling) -> change the needed parameter just once by this boolean
 
+//admin options to display; their length is calculated; | used to separate the options
 char *adminOptions[] = {"Login|", "Add ID|", "Add admin|", "Delete ID|"};
 
 #include <Config.h>
-
 #include <ControlButtons.h>
 #include <OLED_icons.h>
 #include <DisplayFunctions.h>
 
 void eepromPrint(){
+  //print the entire EEPROM via serial
   Serial.println(F("Memory map:"));
   for(int i = 0; i <= MAX_EEPROM; i++){
     Serial.print(EEPROM.read(i));
     Serial.print(' ');
-    if(i % 31 == 0 && i != 0){
+    if(i % 31 == 0 && i != 0){  //every 32nd element creates a new line
       Serial.println();
     }
   }
@@ -41,7 +42,7 @@ void cleanSerial(){
 }
 
 void logout(){
-  digitalWrite(RELAY, HIGH);
+  digitalWrite(RELAY, HIGH);  //turn the relay pin HIGH -> switch it off
   homeScreen();
   Serial.println(F("Logout"));
 }
@@ -49,13 +50,13 @@ void logout(){
 void login(){
   digitalWrite(RELAY, LOW);
   Serial.println(F("Passed. Login OK"));
-  allowed = true;
+  allowed = true; //interrupt makes this false
   cleanSerial();
   DISPLAY_NAME.fillRect(0,0,128-56,20,BLACK);
   DISPLAY_NAME.fillRoundRect(0,0,72,20,2,WHITE);
   displayText("Active", 2, 2, 2, BLACK);
   while(!Serial.available() > 0 && allowed){
-    
+    //rather Serial input or PCINT breaks the loop
   }
   logout();
 }
@@ -144,7 +145,7 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
       }
     }
     if(registered){
-      actualCardIndex = i/4;
+      actualCardIndex = i/4;  //the card index is 4 bytes long
       DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
       DISPLAY_NAME.setCursor(0,56);
       DISPLAY_NAME.print(F("Registered at: " ));
