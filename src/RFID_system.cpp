@@ -15,6 +15,7 @@ boolean adminCard = false;  //determine whether the card is admin
 boolean registered = false; //determine whether the card is registered
 boolean adminMenu = false;  //activating/closing the admin menu
 boolean pressed = false;  //PCINT generates 2 interrupts (rising/falling) -> change the needed parameter just once by this boolean
+boolean dimFlag = false;  //flag to dim the display after timer interrupt
 
 //admin options to display; their length is calculated; | used to separate the options
 char *adminOptions[] = {"Login|", "Add ID|", "Add admin|", "Delete ID|"};
@@ -48,6 +49,8 @@ void logout(){
 }
 
 void login(){
+  dimFlag = false;
+  clearDimTimer();
   digitalWrite(RELAY, LOW);
   Serial.println(F("Passed. Login OK"));
   allowed = true; //interrupt makes this false
@@ -55,8 +58,12 @@ void login(){
   DISPLAY_NAME.fillRect(0,0,128-56,20,BLACK);
   DISPLAY_NAME.fillRoundRect(0,0,72,20,2,WHITE);
   displayText("Active", 2, 2, 2, BLACK);
+  while(!Serial.available() > 0 && allowed && !dimFlag){
+    //Serial input or PCINT breaks the loop
+  }
+  DISPLAY_NAME.dim(true);
   while(!Serial.available() > 0 && allowed){
-    //rather Serial input or PCINT breaks the loop
+    //Serial input or PCINT breaks the loop
   }
   logout();
 }
@@ -331,6 +338,8 @@ void makeCardAdmin(){
 void isCardAdmin(){
   if(adminCard){
     cleanSerial();
+    dimFlag = false;
+    clearDimTimer();
 
     boolean noChar = false;
     adminMenu = true;
@@ -382,8 +391,34 @@ void isCardAdmin(){
           DISPLAY_NAME.drawRoundRect(0,22,64,20,2,WHITE);
           DISPLAY_NAME.drawBitmap(72,0,gymkrenLogo,56,56,BLACK, WHITE);
           DISPLAY_NAME.display();
+          if(dimFlag){
+            DISPLAY_NAME.dim(true);
+          }
+          else{
+            DISPLAY_NAME.dim(false);
+          }
         }
-        //LOOP -> add here
+        for(byte i = (optionLength - 5) * 12 ; i > 0 && adminMenu && prevOption == option; i -= 3){ //space for 5 letters
+          DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
+          DISPLAY_NAME.setCursor(2-i, 22);
+          DISPLAY_NAME.setTextColor(WHITE);
+          for(byte x = 0; x < optionLength; x++){
+            DISPLAY_NAME.print(adminOptions[option][x]);
+          }
+          DISPLAY_NAME.fillRect(62,22,68,20,BLACK);
+          DISPLAY_NAME.drawRoundRect(0,22,64,20,2,WHITE);
+          DISPLAY_NAME.drawBitmap(72,0,gymkrenLogo,56,56,BLACK, WHITE);
+          DISPLAY_NAME.display();
+          if(dimFlag){
+            DISPLAY_NAME.dim(true);
+          }
+          else{
+            DISPLAY_NAME.dim(false);
+          }
+        }
+        while(adminMenu && prevOption == option && !(TIFR1 & (1<<OCF1B))){  //TIFR1 -> flag register; here trying to wait until the 1-flag
+          ;
+        }
       }
       if(Serial.available() > 0){ //in case of serial input
           option = Serial.read() - 48; //Just 1st digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)
@@ -482,7 +517,7 @@ void setup()
   
   interruptConfig();
   displayDimSetup();
-  //DISPLAY_NAME.dim(true);
+  DISPLAY_NAME.dim(false);
 
   byte a = 128;
   a = a << 2;
@@ -490,8 +525,14 @@ void setup()
   Serial.println(a);
 }
 void loop(){
+  // dim the display after reaching the timer interrupt
+  if(dimFlag){
+    DISPLAY_NAME.dim(dimFlag);
+  }
+  else{
+    DISPLAY_NAME.dim(dimFlag);
+  }
   // Look for new cards
-
   if ( ! mfrc522.PICC_IsNewCardPresent()) 
   {
     return;
@@ -501,7 +542,10 @@ void loop(){
   {
     return;
   }
-  
+
+  DISPLAY_NAME.dim(false);
+  clearDimTimer();  //start the dim timer from 0
+
   Serial.println(F("Actual card number: "));
   //Read the card number:
   getCardNumber();
