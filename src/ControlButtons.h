@@ -9,10 +9,10 @@ void clearDimTimer(void);
 
 ISR(PCINT0_vect){   //STOP_BUTTON
     cli();
-    dimFlag = false;
-    clearDimTimer();
     Serial.println("STOP");
     if(allowed || adminMenu){
+        dimFlag = false;
+        clearDimTimer();
         allowed = false;
         adminMenu = false;
         adminCard = false; //if STOP_BUTTON is pushed during admin option selection, the next condition won't be fulfilles 
@@ -29,13 +29,13 @@ ISR(PCINT2_vect){  //Control buttons
     byte bitCheck = (PIND &= ~(1 << PD5)) >> 4; //shift PIND value 4 right -> PD4 at first place, PD7 at 4th place
     Serial.println(bitCheck, BIN);
     pressed ^= pressed;
-    dimFlag = false;
-    clearDimTimer();
     if(!pressed){    
         if(bitCheck == 0b1){
             Serial.println("OK");
             if(adminMenu){
                 adminMenu = false;
+                dimFlag = false;
+                clearDimTimer();
             }
             else{
                 option = 0;
@@ -43,13 +43,17 @@ ISR(PCINT2_vect){  //Control buttons
         }
         else if(bitCheck == 0b100){
             Serial.println("UP");
-            if(option < 3){
+            if(option < 3 && adminMenu){
+                dimFlag = false;
+                clearDimTimer();
                 option++;
             } 
         }
         else if(bitCheck == 0b1000){
             Serial.println("DOWN");
-            if(option > 0){
+            if(option > 0 && adminMenu){
+                dimFlag = false;
+                clearDimTimer();
                 option--;
             } 
         }
