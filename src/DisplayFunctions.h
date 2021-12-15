@@ -11,13 +11,21 @@ void displayDimSetup(){
     TCNT1  = 0; //counter value = 0
     TCCR1B |= (1 << WGM12)|(1 << CS12)|(1 << CS10);    //set the waveform generation mode & prescaler to clk/1024 (datasheet)
     OCR1A |= 62500; //4-second interval
+    OCR1B |= 31250; //2-second scroll interval
     TIMSK1 |= 1 << OCIE1A;
 }
 
 ISR(TIMER1_COMPA_vect){
     cli();  //disable interrupts
     Serial.println("dim");
-    DISPLAY_NAME.dim(true);
+    dimFlag = true;
+    sei();  //enable interrupts
+}
+
+ISR(TIMER1_COMPB_vect){
+    cli();  //disable interrupts
+    TIFR1 |= 1 << OCF1B;
+    //Serial.println("scroll pause");
     sei();  //enable interrupts
 }
 
@@ -69,6 +77,9 @@ void displayText(int text){
 }
 
 void homeScreen(){
+    clearDimTimer();
+    DISPLAY_NAME.dim(false);
+
     DISPLAY_NAME.clearDisplay();
     DISPLAY_NAME.drawBitmap(128-56,0,gymkrenLogo,56,56,BLACK, WHITE);
 

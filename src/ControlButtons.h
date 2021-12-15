@@ -5,9 +5,12 @@ boolean allowed = false;
 
 void logout(void);
 void homeScreen(void);
+void clearDimTimer(void);
 
 ISR(PCINT0_vect){   //STOP_BUTTON
     cli();
+    dimFlag = false;
+    clearDimTimer();
     Serial.println("STOP");
     if(allowed || adminMenu){
         allowed = false;
@@ -26,6 +29,8 @@ ISR(PCINT2_vect){  //Control buttons
     byte bitCheck = (PIND &= ~(1 << PD5)) >> 4; //shift PIND value 4 right -> PD4 at first place, PD7 at 4th place
     Serial.println(bitCheck, BIN);
     pressed ^= pressed;
+    dimFlag = false;
+    clearDimTimer();
     if(!pressed){    
         if(bitCheck == 0b1){
             Serial.println("OK");
@@ -61,4 +66,8 @@ void interruptConfig(void){
     PCMSK2 |= _BV(PCINT20);
     PCMSK2 |= _BV(PCINT22);
     PCMSK2 |= _BV(PCINT23);
+}
+
+void clearDimTimer(){
+    TCNT1  = 0; //counter value = 0
 }
