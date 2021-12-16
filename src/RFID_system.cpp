@@ -16,6 +16,7 @@ boolean registered = false; //determine whether the card is registered
 boolean adminMenu = false;  //activating/closing the admin menu
 boolean pressed = false;  //PCINT generates 2 interrupts (rising/falling) -> change the needed parameter just once by this boolean
 boolean dimFlag = false;  //flag to dim the display after timer interrupt
+boolean scrollFlag = false;
 
 //admin options to display; their length is calculated; | used to separate the options
 char *adminOptions[] = {"Login|", "Add ID|", "Add admin|", "Delete ID|"};
@@ -55,7 +56,8 @@ void login(){
   Serial.println(F("Passed. Login OK"));
   allowed = true; //interrupt makes this false
   cleanSerial();
-  DISPLAY_NAME.fillRect(0,0,128-56,20,BLACK);
+  DISPLAY_NAME.fillRect(0,0,128-56,42,BLACK);
+  DISPLAY_NAME.fillRect(100,56,128,8,BLACK);  //clear the mysterious sign appearing on the display
   DISPLAY_NAME.fillRoundRect(0,0,72,20,2,WHITE);
   displayText("Active", 2, 2, 2, BLACK);
   while(!Serial.available() > 0 && allowed && !dimFlag){
@@ -245,6 +247,7 @@ void addCard(){
 void viewCards(){
   //Loads the card nums from EEPROM
   boolean zeroBeginning = false;
+  byte displayLine = 3; //set the display line
   for(byte i = 0; i < (MAX_EEPROM + 1 - ADMIN_CARDS) / 4; i++){
     for(byte y = 0; y < 4; y++){
       if(EEPROM.read((i*4)+y) == 0xFF){
@@ -257,6 +260,11 @@ void viewCards(){
           Serial.print(F("Index "));
           Serial.print(i);
           Serial.print(F(": "));
+          if(displayLine < 8){
+            printText("Index ", 0, 8*displayLine, 1, WHITE);
+            DISPLAY_NAME.print(i);
+            DISPLAY_NAME.print(": ");
+          }
         }
         if(y > 0 && zeroBeginning){
           Serial.print(F("Card with zero beginning"));
@@ -271,12 +279,15 @@ void viewCards(){
         if(!zeroBeginning){
           Serial.print(EEPROM.read((i*4)+y), HEX);
           Serial.print(' ');
+          DISPLAY_NAME.print(EEPROM.read((i*4)+y), HEX);
         }
         if(y == 3){
           Serial.println();
+          displayLine++;
         }
       }
     }
+    DISPLAY_NAME.display();
     zeroBeginning = false;
   } 
 }
@@ -380,6 +391,7 @@ void isCardAdmin(){
         Serial.println(optionLength);
       }
       if(optionLength >= 5){
+        //scroll forward loop
         for(byte i = 0; i <= (optionLength - 5) * 12 && adminMenu && prevOption == option; i++){ //space for 5 letters
           DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
           DISPLAY_NAME.setCursor(2-i, 22);
@@ -398,6 +410,7 @@ void isCardAdmin(){
             DISPLAY_NAME.dim(false);
           }
         }
+        //scroll back loop
         for(byte i = (optionLength - 5) * 12 ; i > 0 && adminMenu && prevOption == option; i -= 3){ //space for 5 letters
           DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
           DISPLAY_NAME.setCursor(2-i, 22);
@@ -416,9 +429,12 @@ void isCardAdmin(){
             DISPLAY_NAME.dim(false);
           }
         }
-        while(adminMenu && prevOption == option && !(TIFR1 & (1<<OCF1B))){  //TIFR1 -> flag register; here trying to wait until the 1-flag
-          ;
+        //DOESN'T WORK
+        /*clearDimTimer();
+        while(adminMenu && prevOption == option && !scrollFlag){
+          delayMicroseconds(1);
         }
+        scrollFlag = false;*/
       }
       if(Serial.available() > 0){ //in case of serial input
           option = Serial.read() - 48; //Just 1st digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)

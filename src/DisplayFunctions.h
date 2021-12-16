@@ -12,20 +12,18 @@ void displayDimSetup(){
     TCCR1B |= (1 << WGM12)|(1 << CS12)|(1 << CS10);    //set the waveform generation mode & prescaler to clk/1024 (datasheet)
     OCR1A |= 62500; //4-second interval
     OCR1B |= 31250; //2-second scroll interval
-    TIMSK1 |= 1 << OCIE1A;
+    TIMSK1 |= (1 << OCIE1B)|(1 << OCIE1A);   //output compare match enable
 }
 
 ISR(TIMER1_COMPA_vect){
     cli();  //disable interrupts
-    Serial.println("dim");
     dimFlag = true;
     sei();  //enable interrupts
 }
 
 ISR(TIMER1_COMPB_vect){
     cli();  //disable interrupts
-    TIFR1 |= 1 << OCF1B;
-    //Serial.println("scroll pause");
+    scrollFlag = true;
     sei();  //enable interrupts
 }
 

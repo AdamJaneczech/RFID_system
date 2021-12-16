@@ -43,19 +43,23 @@ ISR(PCINT2_vect){  //Control buttons
         }
         else if(bitCheck == 0b100){
             Serial.println("UP");
-            if(option < 3 && adminMenu){
+            if(adminMenu){
                 dimFlag = false;
                 clearDimTimer();
-                option++;
-            } 
+                if(option < 3){
+                    option++;
+                }
+            }
         }
         else if(bitCheck == 0b1000){
             Serial.println("DOWN");
-            if(option > 0 && adminMenu){
+            if(adminMenu){
                 dimFlag = false;
                 clearDimTimer();
-                option--;
-            } 
+                if(option > 0){
+                    option--;
+                }
+            }
         }
     }
     sei();
