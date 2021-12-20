@@ -30,8 +30,8 @@ ISR(PCINT2_vect){  //Control buttons
     Serial.println(bitCheck, BIN);
     pressed ^= pressed;
     if(!pressed){    
-        if(bitCheck == 0b1){
-            Serial.println("OK");
+        if(bitCheck == 0b1){    //OK button
+            //Serial.println("OK");
             if(adminMenu){
                 adminMenu = false;
                 dimFlag = false;
@@ -41,18 +41,18 @@ ISR(PCINT2_vect){  //Control buttons
                 option = 0;
             }
         }
-        else if(bitCheck == 0b100){
-            Serial.println("UP");
+        else if(bitCheck == 0b100){ //UP button
+            //Serial.println("UP");
             if(adminMenu){
                 dimFlag = false;
                 clearDimTimer();
-                if(option < 3){
+                if(option < 4){
                     option++;
                 }
             }
         }
-        else if(bitCheck == 0b1000){
-            Serial.println("DOWN");
+        else if(bitCheck == 0b1000){ //DOWN button
+            //Serial.println("DOWN");
             if(adminMenu){
                 dimFlag = false;
                 clearDimTimer();

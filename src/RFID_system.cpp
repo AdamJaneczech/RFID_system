@@ -19,7 +19,7 @@ boolean dimFlag = false;  //flag to dim the display after timer interrupt
 boolean scrollFlag = false;
 
 //admin options to display; their length is calculated; | used to separate the options
-char *adminOptions[] = {"Login|", "Add ID|", "Add admin|", "Delete ID|"};
+char *adminOptions[] = {"Login|", "Add ID|", "Add admin|", "Delete ID|", "View IDs|"};
 
 #include <Config.h>
 #include <ControlButtons.h>
@@ -250,49 +250,57 @@ void viewCards(){ //Loads the card nums from EEPROM
   byte displayLine = 0; //set the display line
   option = 0; //set the cursor to the first index by making the option variable 0
   byte prevOption = option;
-  
-  for(byte i = 0; i < (MAX_EEPROM + 1 - ADMIN_CARDS) / 4; i++){
-    for(byte y = 0; y < 4; y++){
-      if(EEPROM.read((i*4)+y) == 0xFF){
-        if(y == 0){
-          zeroBeginning = true;
-        }
-      }
-      else{
-        if(y == 0){
-          Serial.print(F("Index "));
-          Serial.print(i);
-          Serial.print(F(": "));
-          if(displayLine < 8){
-            printText("Index ", 8, 8*displayLine, 1, WHITE);
-            DISPLAY_NAME.print(i);
-            DISPLAY_NAME.print(": ");
+  //Serial.println("Got to cycle");
+  DISPLAY_NAME.flush();
+  while(adminMenu){
+    if(prevOption != option){
+      DISPLAY_NAME.fillRect(0,0,8,128,BLACK);
+      DISPLAY_NAME.drawRect(2, option * 8 + 2, 4, 4, WHITE);
+      for(byte i = 0; i < (MAX_EEPROM + 1 - ADMIN_CARDS) / 4; i++){
+        for(byte y = 0; y < 4; y++){
+          if(EEPROM.read((i*4)+y) == 0xFF){
+            if(y == 0){
+              zeroBeginning = true;
+            }
+          }
+          else{
+            if(y == 0){
+              Serial.print(F("Index "));
+              Serial.print(i);
+              Serial.print(F(": "));
+              if(displayLine < 8){
+                printText("Index ", 8, 8*displayLine, 1, WHITE);
+                DISPLAY_NAME.print(i);
+                DISPLAY_NAME.print(": ");
+              }
+            }
+            if(y > 0 && zeroBeginning){
+              Serial.print(F("Card with zero beginning"));
+              Serial.print(F("Index "));
+              Serial.print(i);
+              Serial.print(F(": "));
+              for(byte z = 0; z <= y; z++){
+                Serial.print(EEPROM.read((i*4)+z), HEX);
+                Serial.print(' ');
+              }
+            }
+            if(!zeroBeginning){
+              Serial.print(EEPROM.read((i*4)+y), HEX);
+              Serial.print(' ');
+              DISPLAY_NAME.print(EEPROM.read((i*4)+y), HEX);
+            }
+            if(y == 3){
+              Serial.println();
+              displayLine++;
+            }
           }
         }
-        if(y > 0 && zeroBeginning){
-          Serial.print(F("Card with zero beginning"));
-          Serial.print(F("Index "));
-          Serial.print(i);
-          Serial.print(F(": "));
-          for(byte z = 0; z <= y; z++){
-            Serial.print(EEPROM.read((i*4)+z), HEX);
-            Serial.print(' ');
-          }
-        }
-        if(!zeroBeginning){
-          Serial.print(EEPROM.read((i*4)+y), HEX);
-          Serial.print(' ');
-          DISPLAY_NAME.print(EEPROM.read((i*4)+y), HEX);
-        }
-        if(y == 3){
-          Serial.println();
-          displayLine++;
-        }
       }
+      zeroBeginning = false;
+      DISPLAY_NAME.display();
+      prevOption = option;
     }
-    zeroBeginning = false;
-  }
-  DISPLAY_NAME.display(); 
+  } 
 }
 
 byte enterCardIndex(){
@@ -439,10 +447,10 @@ void isCardAdmin(){
         }
         scrollFlag = false;*/
       }
-      if(Serial.available() > 0){ //in case of serial input
-          option = Serial.read() - 48; //Just 1st digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)
-          cleanSerial(); //Added this loop because of ASCII line break command
-      }
+    }
+    if(Serial.available() > 0){ //in case of serial input
+        option = Serial.read() - 48; //Just 1st digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)
+        cleanSerial(); //Added this loop because of ASCII line break command
     }
     adminMenu = true; //prepare for the next menu level
     //Here, code after interrupt (OK_BUTTON) happens
@@ -481,6 +489,8 @@ void setup()
   Serial.begin(BAUDRATE);   // Initiate a serial communication
   SPI.begin();      // Initiate  SPI bus
   mfrc522.PCD_Init();   // Initiate MFRC522
+
+  adminMenu = false;
 
   DISPLAY_NAME.begin(SSD1306_SWITCHCAPVCC, 0x3C);
 
