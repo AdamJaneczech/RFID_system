@@ -131,8 +131,8 @@ void getCardNumber(){
     }
     Serial.print(actualCard[i], HEX /*+ " "*/);
     DISPLAY_NAME.print(actualCard[i], HEX);
-    DISPLAY_NAME.display();
   }
+  DISPLAY_NAME.display();
 }
 
 void isCardRegistered(){ //modified here -> EEPROM direct reading
@@ -178,9 +178,9 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
       Serial.println(F("ID not yet registered"));
       DISPLAY_NAME.setCursor(0,56);
       DISPLAY_NAME.print(F("ID not yet registered"));
-      DISPLAY_NAME.display();
     }
   }
+  DISPLAY_NAME.display();
   //registered = false;
 }
 
@@ -244,10 +244,13 @@ void addCard(){
   }
 }
 
-void viewCards(){
-  //Loads the card nums from EEPROM
-  boolean zeroBeginning = false;
-  byte displayLine = 3; //set the display line
+void viewCards(){ //Loads the card nums from EEPROM
+  DISPLAY_NAME.clearDisplay();
+  boolean zeroBeginning = false;  //This variable determines whether the card begins with 0xFF (this function could later be removed)
+  byte displayLine = 0; //set the display line
+  option = 0; //set the cursor to the first index by making the option variable 0
+  byte prevOption = option;
+  
   for(byte i = 0; i < (MAX_EEPROM + 1 - ADMIN_CARDS) / 4; i++){
     for(byte y = 0; y < 4; y++){
       if(EEPROM.read((i*4)+y) == 0xFF){
@@ -261,7 +264,7 @@ void viewCards(){
           Serial.print(i);
           Serial.print(F(": "));
           if(displayLine < 8){
-            printText("Index ", 0, 8*displayLine, 1, WHITE);
+            printText("Index ", 8, 8*displayLine, 1, WHITE);
             DISPLAY_NAME.print(i);
             DISPLAY_NAME.print(": ");
           }
@@ -287,9 +290,9 @@ void viewCards(){
         }
       }
     }
-    DISPLAY_NAME.display();
     zeroBeginning = false;
-  } 
+  }
+  DISPLAY_NAME.display(); 
 }
 
 byte enterCardIndex(){
@@ -488,18 +491,7 @@ void setup()
   DISPLAY_NAME.setTextSize(1);
   DISPLAY_NAME.setTextColor(WHITE);
   DISPLAY_NAME.setCursor(0, 56);
-  //test scroll text
-  /*for(uint8_t u = 0; u <= 9*8; u++){
-    DISPLAY_NAME.fillRect(0,0,128,8,BLACK);
-    DISPLAY_NAME.setCursor(0-u, 0);
-    DISPLAY_NAME.print("test text");
-    DISPLAY_NAME.fillRect(32,0,96,8,BLACK);
-    DISPLAY_NAME.display();
-  }*/
-  
   //Admin options
-  
-  //
   pinMode(RELAY, OUTPUT);
   digitalWrite(RELAY, HIGH);
   //
