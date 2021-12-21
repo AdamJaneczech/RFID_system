@@ -91,7 +91,7 @@ void getCardInfo(){
     if(emptyFields == 4){
       if(emptyIndex == 0){
         lowestEmptyIndex = ((loopCount + 1) / 4) - 1;
-        Serial.print("Lowest: ");
+        Serial.print(F("Lowest: "));
         Serial.println(lowestEmptyIndex);
       }
       emptyIndex = ((loopCount + 1) / 4) - 1;
@@ -246,12 +246,16 @@ void addCard(){
 
 void viewCards(){ //Loads the card nums from EEPROM
   DISPLAY_NAME.clearDisplay();
+  DISPLAY_NAME.flush();
+  Serial.println(adminMenu);
   boolean zeroBeginning = false;  //This variable determines whether the card begins with 0xFF (this function could later be removed)
   byte displayLine = 0; //set the display line
   option = 0; //set the cursor to the first index by making the option variable 0
-  byte prevOption = option;
-  //Serial.println("Got to cycle");
-  DISPLAY_NAME.flush();
+  byte prevOption = 1;
+  Serial.println("Entered a loop");
+  if(adminMenu){
+    Serial.println("AdminMenu");
+  }
   while(adminMenu){
     if(prevOption != option){
       DISPLAY_NAME.fillRect(0,0,8,128,BLACK);
@@ -529,11 +533,13 @@ void setup()
   if(cardCount < 1){
     Serial.println(F("no cards loaded"));
   }
+  interruptConfig();
   //Load cards from EEPROM to variable
+  adminMenu = true;
   viewCards();
+  adminMenu = false;
   Serial.println(F("Approximate your card to the reader..."));
   
-  interruptConfig();
   displayDimSetup();
   DISPLAY_NAME.dim(false);
 

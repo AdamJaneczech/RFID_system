@@ -50,6 +50,8 @@ ISR(PCINT2_vect){  //Control buttons
                     option++;
                 }
             }
+            Serial.print("Option ");
+            Serial.println(option);
         }
         else if(bitCheck == 0b1000){ //DOWN button
             //Serial.println("DOWN");
@@ -60,6 +62,8 @@ ISR(PCINT2_vect){  //Control buttons
                     option--;
                 }
             }
+            Serial.print("Option ");
+            Serial.println(option);
         }
     }
     sei();
