@@ -19,7 +19,7 @@ boolean dimFlag = false;  //flag to dim the display after timer interrupt
 boolean scrollFlag = false;
 
 //admin options to display; their length is calculated; | used to separate the options
-char *adminOptions[] = {"Login|", "Add ID|", "Add admin|", "Delete ID|", "View IDs|"};
+char* adminOptions[] = {(char*)"Login|", (char*)"Add ID|", (char*)"Add admin|", (char*)"Delete ID|", (char*)"View IDs|"};
 
 #include <Config.h>
 #include <ControlButtons.h>
@@ -59,7 +59,7 @@ void login(){
   DISPLAY_NAME.fillRect(0,0,128-56,42,BLACK);
   DISPLAY_NAME.fillRect(100,56,128,8,BLACK);  //clear the mysterious sign appearing on the display
   DISPLAY_NAME.fillRoundRect(0,0,72,20,2,WHITE);
-  displayText("Active", 2, 2, 2, BLACK);
+  displayText((char*)"Active", 2, 2, 2, BLACK);
   while(!Serial.available() > 0 && allowed && !dimFlag){
     //Serial input or PCINT breaks the loop
   }
@@ -187,7 +187,7 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
 void addCard(){
   Serial.println(F("Approximate new card to the reader..."));
   clearDisplayLine(6,2);
-  displayText("Approach the new card", 0, 56, 1, WHITE);
+  displayText((char*)"Approach the new card", 0, 56, 1, WHITE);
   // Look for new cards
   while( ! mfrc522.PICC_IsNewCardPresent()) 
   {
@@ -214,7 +214,7 @@ void addCard(){
       cardString[i] = String(actualCard[i], HEX);
       if(cardString[i].length() < 2){
         cardString[i] = "0" + String(actualCard[i], HEX);
-        printText("0", 0, 48);
+        printText((char*)"0", 0, 48);
       }
       cardString[i].toUpperCase();
       Serial.print(cardString[i] + " ");
@@ -231,7 +231,7 @@ void addCard(){
     cardCount++;
     Serial.println("Actual number of stored cards: " + String(cardCount)); 
     clearDisplayLine(7,1);
-    printText("New card index: ", 0, 56, 1, WHITE);
+    printText((char*)"New card index: ", 0, 56, 1, WHITE);
     displayText(lowestEmptyIndex);
     DISPLAY_NAME.flush();
     while(adminMenu){
@@ -257,6 +257,7 @@ void viewCards(){ //Loads the card nums from EEPROM
     Serial.println("AdminMenu");
   }
   while(adminMenu){
+    Serial.println("ping");
     if(prevOption != option){
       DISPLAY_NAME.fillRect(0,0,8,128,BLACK);
       DISPLAY_NAME.drawRect(2, option * 8 + 2, 4, 4, WHITE);
@@ -273,7 +274,7 @@ void viewCards(){ //Loads the card nums from EEPROM
               Serial.print(i);
               Serial.print(F(": "));
               if(displayLine < 8){
-                printText("Index ", 8, 8*displayLine, 1, WHITE);
+                printText((char*)"Index ", 8, 8*displayLine, 1, WHITE);
                 DISPLAY_NAME.print(i);
                 DISPLAY_NAME.print(": ");
               }
@@ -381,7 +382,7 @@ void isCardAdmin(){
 
     DISPLAY_NAME.fillRect(0,0,128-56,20,BLACK);
     DISPLAY_NAME.fillRoundRect(0,0,64,20,2,WHITE);
-    displayText("Admin", 2, 2, 2, BLACK);
+    displayText((char*)"Admin", 2, 2, 2, BLACK);
 
     DISPLAY_NAME.drawRoundRect(0,22,68,20,2,WHITE);
     DISPLAY_NAME.setCursor(2, 22);
@@ -542,11 +543,7 @@ void setup()
   
   displayDimSetup();
   DISPLAY_NAME.dim(false);
-
-  byte a = 128;
-  a = a << 2;
-  Serial.print("a: ");
-  Serial.println(a);
+  
 }
 void loop(){
   // dim the display after reaching the timer interrupt

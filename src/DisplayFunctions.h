@@ -81,12 +81,12 @@ void homeScreen(){
     DISPLAY_NAME.clearDisplay();
     DISPLAY_NAME.drawBitmap(128-56,0,gymkrenLogo,56,56,BLACK, WHITE);
 
-    printText("Login", 2, 2, 2, WHITE);
+    printText((char*)"Login", 2, 2, 2, WHITE);
     DISPLAY_NAME.drawRoundRect(0,0,64,20,2,WHITE);
     DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
 
     clearDisplayLine(7, 1);
-    printText("Last user: ", 0, 56, 1, WHITE);
+    printText((char*)"Last user: ", 0, 56, 1, WHITE);
     displayText(actualCardIndex);
     DISPLAY_NAME.display();
 }
@@ -95,10 +95,10 @@ void homeScreen(boolean firstTime){
     DISPLAY_NAME.clearDisplay();
     DISPLAY_NAME.drawBitmap(128-56,0,gymkrenLogo,56,56,BLACK, WHITE);
 
-    printText("Login", 2, 2, 2, WHITE);
+    printText((char*)"Login", 2, 2, 2, WHITE);
     DISPLAY_NAME.drawRoundRect(0,0,64,20,2,WHITE);
     DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
 
-    printText("Saved cards: ", 0, 56, 1, WHITE);
+    printText((char*)"Saved cards: ", 0, 56, 1, WHITE);
     displayText(cardCount);
 }
