@@ -247,7 +247,6 @@ void addCard(){
 void viewCards(){ //Loads the card nums from EEPROM
   DISPLAY_NAME.clearDisplay();
   DISPLAY_NAME.flush();
-  Serial.println(adminMenu);
   boolean zeroBeginning = false;  //This variable determines whether the card begins with 0xFF (this function could later be removed)
   byte displayLine = 0; //set the display line
   option = 0; //set the cursor to the first index by making the option variable 0
@@ -257,10 +256,11 @@ void viewCards(){ //Loads the card nums from EEPROM
     Serial.println("AdminMenu");
   }
   while(adminMenu){
-    Serial.println("ping");
+    Serial.println("pong");
     if(prevOption != option){
       DISPLAY_NAME.fillRect(0,0,8,128,BLACK);
       DISPLAY_NAME.drawRect(2, option * 8 + 2, 4, 4, WHITE);
+      displayLine = 0;
       for(byte i = 0; i < (MAX_EEPROM + 1 - ADMIN_CARDS) / 4; i++){
         for(byte y = 0; y < 4; y++){
           if(EEPROM.read((i*4)+y) == 0xFF){
@@ -305,7 +305,10 @@ void viewCards(){ //Loads the card nums from EEPROM
       DISPLAY_NAME.display();
       prevOption = option;
     }
-  } 
+  }
+  while(true){
+    //WEIRD???
+  }
 }
 
 byte enterCardIndex(){
