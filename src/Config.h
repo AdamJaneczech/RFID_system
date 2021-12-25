@@ -14,6 +14,13 @@
 #define DOWN_BUTTON PD7
 #define OK_BUTTON PD4
 #define STOP_BUTTON PB0
+//Boolean 8-bit variable configuration
+#define ADMIN_CARD 0
+#define REGISTERED 1
+#define ADMIN_MENU 2
+#define PRESSED 3
+#define DIM_FLAG 4
+#define SCROLL_FLAG 5
 //Relay pin
 #define RELAY 9
 //OLED display name

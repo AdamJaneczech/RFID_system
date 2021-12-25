@@ -10,16 +10,18 @@ byte lowestEmptyIndex;  //the lowest index for storing a card into EEPROM is sav
 byte option = 0;  //selected option - aadmin menu
 
 String cardString[4]; //the active card number converted to string
-  
+
+uint8_t global = 0b00000000;  //the global booleans are on specific bits (see Config.h)
+
 boolean adminCard = false;  //determine whether the card is admin
 boolean registered = false; //determine whether the card is registered
 boolean adminMenu = false;  //activating/closing the admin menu
 boolean pressed = false;  //PCINT generates 2 interrupts (rising/falling) -> change the needed parameter just once by this boolean
-boolean dimFlag = false;  //flag to dim the display after timer interrupt
+//uint8_t dimFlag = false;  //flag to dim the display after timer interrupt
 boolean scrollFlag = false;
 
 //admin options to display; their length is calculated; | used to separate the options
-char* adminOptions[] = {(char*)"Login|", (char*)"Add ID|", (char*)"Add admin|", (char*)"Delete ID|", (char*)"View IDs|"};
+const char* adminOptions[] = {(char*)"Login|", (char*)"Add ID|", (char*)"Add admin|", (char*)"Delete ID|", (char*)"View IDs|"};
 
 #include <Config.h>
 #include <ControlButtons.h>
@@ -50,7 +52,7 @@ void logout(){
 }
 
 void login(){
-  dimFlag = false;
+  global |= 1 << DIM_FLAG;
   clearDimTimer();
   digitalWrite(RELAY, LOW);
   Serial.println(F("Passed. Login OK"));
@@ -60,7 +62,7 @@ void login(){
   DISPLAY_NAME.fillRect(100,56,128,8,BLACK);  //clear the mysterious sign appearing on the display
   DISPLAY_NAME.fillRoundRect(0,0,72,20,2,WHITE);
   displayText((char*)"Active", 2, 2, 2, BLACK);
-  while(!Serial.available() > 0 && allowed && !dimFlag){
+  while(!Serial.available() > 0 && allowed && !(global & 1 << DIM_FLAG)){
     //Serial input or PCINT breaks the loop
   }
   DISPLAY_NAME.dim(true);
@@ -184,7 +186,7 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
   //registered = false;
 }
 
-void addCard(){
+/*void addCard(){
   Serial.println(F("Approximate new card to the reader..."));
   clearDisplayLine(6,2);
   displayText((char*)"Approach the new card", 0, 56, 1, WHITE);
@@ -242,7 +244,7 @@ void addCard(){
   else if(registered){
     Serial.println(F("Card is already registered"));
   }
-}
+}*/
 
 void viewCards(){ //Loads the card nums from EEPROM
   DISPLAY_NAME.clearDisplay();
@@ -252,9 +254,6 @@ void viewCards(){ //Loads the card nums from EEPROM
   option = 0; //set the cursor to the first index by making the option variable 0
   byte prevOption = 1;
   Serial.println("Entered a loop");
-  if(adminMenu){
-    Serial.println("AdminMenu");
-  }
   while(adminMenu){
     Serial.println("pong");
     if(prevOption != option){
@@ -305,9 +304,6 @@ void viewCards(){ //Loads the card nums from EEPROM
       DISPLAY_NAME.display();
       prevOption = option;
     }
-  }
-  while(true){
-    //WEIRD???
   }
 }
 
@@ -368,7 +364,7 @@ void makeCardAdmin(){
 void isCardAdmin(){
   if(adminCard){
     cleanSerial();
-    dimFlag = false;
+    global &= ~(1 << DIM_FLAG);
     clearDimTimer();
 
     boolean noChar = false;
@@ -422,7 +418,7 @@ void isCardAdmin(){
           DISPLAY_NAME.drawRoundRect(0,22,64,20,2,WHITE);
           DISPLAY_NAME.drawBitmap(72,0,gymkrenLogo,56,56,BLACK, WHITE);
           DISPLAY_NAME.display();
-          if(dimFlag){
+          if(global & 1 << DIM_FLAG){
             DISPLAY_NAME.dim(true);
           }
           else{
@@ -441,7 +437,7 @@ void isCardAdmin(){
           DISPLAY_NAME.drawRoundRect(0,22,64,20,2,WHITE);
           DISPLAY_NAME.drawBitmap(72,0,gymkrenLogo,56,56,BLACK, WHITE);
           DISPLAY_NAME.display();
-          if(dimFlag){
+          if(global & 1 << DIM_FLAG){
             DISPLAY_NAME.dim(true);
           }
           else{
@@ -469,7 +465,7 @@ void isCardAdmin(){
           login();
           break;
         case 1: 
-          addCard();
+          //addCard();
           break;
         case 2:
           viewCards();
@@ -477,7 +473,7 @@ void isCardAdmin(){
           break;
         case 3:
           viewCards();
-          deleteCards();
+          //deleteCards();
           break; 
         case 4:
           viewCards();
@@ -550,11 +546,11 @@ void setup()
 }
 void loop(){
   // dim the display after reaching the timer interrupt
-  if(dimFlag){
-    DISPLAY_NAME.dim(dimFlag);
+  if(global & 1 << DIM_FLAG){
+    DISPLAY_NAME.dim(global & 1 << DIM_FLAG);
   }
   else{
-    DISPLAY_NAME.dim(dimFlag);
+    DISPLAY_NAME.dim(global & 1 << DIM_FLAG);
   }
   // Look for new cards
   if ( ! mfrc522.PICC_IsNewCardPresent()) 

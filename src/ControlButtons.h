@@ -11,7 +11,7 @@ ISR(PCINT0_vect){   //STOP_BUTTON
     cli();
     Serial.println("STOP");
     if(allowed || adminMenu){
-        dimFlag = false;
+        global &= ~(1 << DIM_FLAG);
         clearDimTimer();
         allowed = false;
         adminMenu = false;
@@ -34,7 +34,7 @@ ISR(PCINT2_vect){  //Control buttons
             //Serial.println("OK");
             if(adminMenu){
                 adminMenu = false;
-                dimFlag = false;
+                global &= ~(1 << DIM_FLAG);
                 clearDimTimer();
             }
             else{
@@ -44,7 +44,7 @@ ISR(PCINT2_vect){  //Control buttons
         else if(bitCheck == 0b100){ //UP button
             //Serial.println("UP");
             if(adminMenu){
-                dimFlag = false;
+                global &= ~(1 << DIM_FLAG);
                 clearDimTimer();
                 if(option < 4){
                     option++;
@@ -56,7 +56,7 @@ ISR(PCINT2_vect){  //Control buttons
         else if(bitCheck == 0b1000){ //DOWN button
             //Serial.println("DOWN");
             if(adminMenu){
-                dimFlag = false;
+                global &= ~(1 << DIM_FLAG);
                 clearDimTimer();
                 if(option > 0){
                     option--;

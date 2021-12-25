@@ -17,7 +17,7 @@ void displayDimSetup(){
 
 ISR(TIMER1_COMPA_vect){
     cli();  //disable interrupts
-    dimFlag = true;
+    global |= 1 << DIM_FLAG;
     sei();  //enable interrupts
 }
 
@@ -36,6 +36,13 @@ void clearDisplayLine(byte line, byte fontSize){
 }
 
 void printText(char text [], uint8_t x, uint8_t y, uint8_t fontSize, uint8_t fontColor){
+    DISPLAY_NAME.setTextSize(fontSize);
+    DISPLAY_NAME.setTextColor(fontColor);
+    DISPLAY_NAME.setCursor(x, y);
+    DISPLAY_NAME.print(text);
+}
+
+void printText(const char text[], uint8_t x, uint8_t y, uint8_t fontSize, uint8_t fontColor){
     DISPLAY_NAME.setTextSize(fontSize);
     DISPLAY_NAME.setTextColor(fontColor);
     DISPLAY_NAME.setCursor(x, y);
