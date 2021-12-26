@@ -88,8 +88,8 @@ void homeScreen(){
     DISPLAY_NAME.clearDisplay();
     DISPLAY_NAME.drawBitmap(128-56,0,gymkrenLogo,56,56,BLACK, WHITE);
 
-    printText((char*)"Login", 2, 2, 2, WHITE);
-    DISPLAY_NAME.drawRoundRect(0,0,64,20,2,WHITE);
+    printText((char*)"Login", 2, 3, 2, WHITE);
+    DISPLAY_NAME.drawRoundRect(0,0,64,21,2,WHITE);
     DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
 
     clearDisplayLine(7, 1);
@@ -102,8 +102,8 @@ void homeScreen(boolean firstTime){
     DISPLAY_NAME.clearDisplay();
     DISPLAY_NAME.drawBitmap(128-56,0,gymkrenLogo,56,56,BLACK, WHITE);
 
-    printText((char*)"Login", 2, 2, 2, WHITE);
-    DISPLAY_NAME.drawRoundRect(0,0,64,20,2,WHITE);
+    printText((char*)"Login", 2, 3, 2, WHITE);
+    DISPLAY_NAME.drawRoundRect(0,0,64,21,2,WHITE);
     DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
 
     printText((char*)"Saved cards: ", 0, 56, 1, WHITE);

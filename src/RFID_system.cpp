@@ -59,7 +59,7 @@ void login(){
   DISPLAY_NAME.fillRect(0,0,128-56,42,BLACK);
   DISPLAY_NAME.fillRect(100,56,128,8,BLACK);  //clear the mysterious sign appearing on the display
   DISPLAY_NAME.fillRoundRect(0,0,72,20,2,WHITE);
-  displayText((char*)"Active", 2, 2, 2, BLACK);
+  displayText((char*)"Active", 2, 3, 2, BLACK);
   while(!Serial.available() > 0 && (global & 1 << ALLOWED) && !(global & 1 << DIM_FLAG)){
     //Serial input or PCINT breaks the loop
   }
@@ -239,6 +239,34 @@ void addCard(){
   }
 }
 
+byte enterCardIndex(){
+  Serial.print(F("Enter card index: "));
+  byte cardIndex = 0;
+  if(!(global & 1 << ADMIN_MENU)){
+    cleanSerial();
+    while(!(Serial.available() > 0)){
+      ;
+    }
+    byte received[3] = {};
+    byte i = 0;
+    while(Serial.available()){
+      //Serial.flush();
+      received[i] = Serial.read();
+      Serial.println(received[i]);
+      i++;
+    }
+    Serial.print(received[1]);
+    Serial.println(F(" after"));
+    for(byte b = 0; b < i-2; b++){
+      cardIndex += byte(pow(10, (i-b-3)) * (received[b]-48));
+    }
+  }
+  else if(global & 1 << ADMIN_MENU){
+    cardIndex = option;
+  }
+  return cardIndex;
+}
+
 void viewCards(){ //Loads the card nums from EEPROM
   DISPLAY_NAME.clearDisplay();
   DISPLAY_NAME.flush();
@@ -247,8 +275,7 @@ void viewCards(){ //Loads the card nums from EEPROM
   option = 0; //set the cursor to the first index by making the option variable 0
   byte prevOption = 1;
   Serial.println("Entered a loop");
-  while(global & 1 << ADMIN_MENU){
-    Serial.println("pong");
+  while((global & 1 << ADMIN_MENU) && !Serial.available()){
     if(prevOption != option){
       DISPLAY_NAME.fillRect(0,0,8,128,BLACK);
       DISPLAY_NAME.drawRect(2, option * 8 + 2, 4, 4, WHITE);
@@ -339,29 +366,6 @@ void viewCards(boolean firstTime){ //Loads the card nums from EEPROM
   zeroBeginning = false;
 }
 
-byte enterCardIndex(){
-  Serial.print(F("Enter card index: "));
-  cleanSerial();
-  while(!(Serial.available() > 0)){
-    ;
-  }
-  byte received[3] = {};
-  byte i = 0;
-  while(Serial.available()){
-    //Serial.flush();
-    received[i] = Serial.read();
-    Serial.println(received[i]);
-    i++;
-  }
-  Serial.print(received[1]);
-  Serial.println(F(" after"));
-  byte cardIndex = 0;
-  for(byte b = 0; b < i-2; b++){
-    cardIndex += byte(pow(10, (i-b-3)) * (received[b]-48));
-  }
-  return cardIndex;
-}
-
 void deleteCards(){
   Serial.print(F("Select card index: "));
   viewCards();
@@ -412,11 +416,11 @@ void isCardAdmin(){
     Serial.println(F("View all cards --4"));
 
     DISPLAY_NAME.fillRect(0,0,128-56,20,BLACK);
-    DISPLAY_NAME.fillRoundRect(0,0,64,20,2,WHITE);
-    displayText((char*)"Admin", 2, 2, 2, BLACK);
+    DISPLAY_NAME.fillRoundRect(0,0,64,21,2,WHITE);
+    displayText((char*)"Admin", 2, 3, 2, BLACK);
 
-    DISPLAY_NAME.drawRoundRect(0,22,68,20,2,WHITE);
-    DISPLAY_NAME.setCursor(2, 22);
+    DISPLAY_NAME.drawRoundRect(0,22,68,21,2,WHITE);
+    DISPLAY_NAME.setCursor(2, 24);
     DISPLAY_NAME.setTextColor(WHITE);
     DISPLAY_NAME.print(adminOptions[option]);
     DISPLAY_NAME.display();
@@ -429,7 +433,7 @@ void isCardAdmin(){
       if(prevOption != option){
         Serial.println("CONDITION");
         optionLength = 0;
-        printText(adminOptions[option], 2, 22, 2, WHITE);
+        printText(adminOptions[option], 2, 24, 2, WHITE);
         //for loop for determineing the option size (divided with '|')
         while(adminOptions[option][optionLength] != '|'){
           optionLength++;
@@ -440,8 +444,8 @@ void isCardAdmin(){
       if(optionLength >= 5){
         //scroll forward loop
         for(byte i = 0; i <= (optionLength - 5) * 12 && (global & 1 << ADMIN_MENU) && prevOption == option; i++){ //space for 5 letters
-          DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
-          DISPLAY_NAME.setCursor(2-i, 22);
+          DISPLAY_NAME.fillRect(0,23,68,24,BLACK);
+          DISPLAY_NAME.setCursor(2-i, 24);
           DISPLAY_NAME.setTextColor(WHITE);
           for(byte x = 0; x < optionLength; x++){
             DISPLAY_NAME.print(adminOptions[option][x]);
@@ -460,7 +464,7 @@ void isCardAdmin(){
         //scroll back loop
         for(byte i = (optionLength - 5) * 12 ; i > 0 && (global & 1 << ADMIN_MENU) && prevOption == option; i -= 3){ //space for 5 letters
           DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
-          DISPLAY_NAME.setCursor(2-i, 22);
+          DISPLAY_NAME.setCursor(2-i, 24);
           DISPLAY_NAME.setTextColor(WHITE);
           for(byte x = 0; x < optionLength; x++){
             DISPLAY_NAME.print(adminOptions[option][x]);
@@ -509,6 +513,7 @@ void isCardAdmin(){
           break; 
         case 4:
           viewCards();
+          homeScreen();
           break;
         default:
           Serial.print("No option for value: ");
