@@ -9,8 +9,6 @@ byte cardCount = 1; //variable for storing the amount of loaded cards
 byte lowestEmptyIndex;  //the lowest index for storing a card into EEPROM is saved in this variable
 byte option = 0;  //selected option - aadmin menu
 
-String cardString[4]; //the active card number converted to string
-
 volatile uint8_t global = 0b00000000;  //the global booleans are on specific bits (see Config.h)
 
 //boolean adminCard = false;  //determine whether the card is admin
@@ -52,21 +50,21 @@ void logout(){
 }
 
 void login(){
-  global |= 1 << DIM_FLAG;
+  global &= ~(1 << DIM_FLAG);
   clearDimTimer();
   digitalWrite(RELAY, LOW);
   Serial.println(F("Passed. Login OK"));
-  allowed = true; //interrupt makes this false
+  global |= 1 << ALLOWED; //interrupt makes this false
   cleanSerial();
   DISPLAY_NAME.fillRect(0,0,128-56,42,BLACK);
   DISPLAY_NAME.fillRect(100,56,128,8,BLACK);  //clear the mysterious sign appearing on the display
   DISPLAY_NAME.fillRoundRect(0,0,72,20,2,WHITE);
   displayText((char*)"Active", 2, 2, 2, BLACK);
-  while(!Serial.available() > 0 && allowed && !(global & 1 << DIM_FLAG)){
+  while(!Serial.available() > 0 && (global & 1 << ALLOWED) && !(global & 1 << DIM_FLAG)){
     //Serial input or PCINT breaks the loop
   }
   DISPLAY_NAME.dim(true);
-  while(!Serial.available() > 0 && allowed){
+  while(!Serial.available() > 0 && (global & 1 << ALLOWED)){
     //Serial input or PCINT breaks the loop
   }
   logout();
@@ -121,12 +119,6 @@ void getCardNumber(){
   DISPLAY_NAME.setCursor(0,48);
   for(int i = 0; i < mfrc522.uid.size; i++){
     actualCard[i] = mfrc522.uid.uidByte[i];
-    //Possibly a problem with String() -> out of memory
-    cardString[i] = String(actualCard[i], HEX);
-    if(cardString[i].length() < 2){
-      cardString[i] = "0" + String(actualCard[i], HEX);
-    }
-    cardString[i].toUpperCase();
     if(actualCard[i] < 0xF){
       Serial.print('0');
       DISPLAY_NAME.print('0');
@@ -186,7 +178,7 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
   //registered = false;
 }
 
-/*void addCard(){
+void addCard(){
   Serial.println(F("Approximate new card to the reader..."));
   clearDisplayLine(6,2);
   displayText((char*)"Approach the new card", 0, 56, 1, WHITE);
@@ -205,21 +197,18 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
   getCardInfo();
   isCardRegistered();
   //If the card is NOT registered
-  if(!(global & 1 << REGISTERED)){  //EEPROM direct reading -> modify here
+  if(!(global & 1 << REGISTERED)){
     Serial.println(F("New card number: "));
     for(int i = 0; i < mfrc522.uid.size; i++){
       if(cardCount < ((MAX_EEPROM + 1) / 4) - ADMIN_CARDS){
         EEPROM.write((lowestEmptyIndex) * 4 + i, mfrc522.uid.uidByte[i]); //5th position in EEPROM determines the admin attribute
       }
-      //--Print String card number--
       actualCard[i] = mfrc522.uid.uidByte[i];
-      cardString[i] = String(actualCard[i], HEX);
-      if(cardString[i].length() < 2){
-        cardString[i] = "0" + String(actualCard[i], HEX);
+      if(actualCard[i] < 0xF){
+        Serial.print('0');
         printText((char*)"0", 0, 48);
       }
-      cardString[i].toUpperCase();
-      Serial.print(cardString[i] + " ");
+      Serial.print(actualCard[i]);
       printText((actualCard[i], HEX), 0, 48, 1, WHITE);
       //----//
     }
@@ -227,11 +216,15 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
     DISPLAY_NAME.flush();
     Serial.print(F("Card "));
     for(int i = 0; i < 4; i++){
-      Serial.println(cardString[i] + " ");
+      Serial.print(actualCard[i]);
+      Serial.print(' ');
     }
-    Serial.println("stored as number " + String(lowestEmptyIndex) + " in the database.");
+    Serial.print("stored as number ");
+    Serial.print(lowestEmptyIndex);
+    Serial.println(" in the database.");
     cardCount++;
-    Serial.println("Actual number of stored cards: " + String(cardCount)); 
+    Serial.print("Actual number of stored cards: "); 
+    Serial.println(cardCount);
     clearDisplayLine(7,1);
     printText((char*)"New card index: ", 0, 56, 1, WHITE);
     displayText(lowestEmptyIndex);
@@ -244,7 +237,7 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
   else if(global & 1 << REGISTERED){
     Serial.println(F("Card is already registered"));
   }
-}*/
+}
 
 void viewCards(){ //Loads the card nums from EEPROM
   DISPLAY_NAME.clearDisplay();
@@ -305,6 +298,45 @@ void viewCards(){ //Loads the card nums from EEPROM
       prevOption = option;
     }
   }
+}
+
+void viewCards(boolean firstTime){ //Loads the card nums from EEPROM
+  boolean zeroBeginning = false;  //This variable determines whether the card begins with 0xFF (this function could later be removed)
+  Serial.println("Entered a loop");
+  for(byte i = 0; i < (MAX_EEPROM + 1 - ADMIN_CARDS) / 4; i++){
+    for(byte y = 0; y < 4; y++){
+      if(EEPROM.read((i*4)+y) == 0xFF){
+        if(y == 0){
+          zeroBeginning = true;
+        }
+      }
+      else{
+        if(y == 0){
+          Serial.print(F("Index "));
+          Serial.print(i);
+          Serial.print(F(": "));
+        }
+        if(y > 0 && zeroBeginning){
+          Serial.print(F("Card with zero beginning"));
+          Serial.print(F("Index "));
+          Serial.print(i);
+          Serial.print(F(": "));
+          for(byte z = 0; z <= y; z++){
+            Serial.print(EEPROM.read((i*4)+z), HEX);
+            Serial.print(' ');
+          }
+        }
+        if(!zeroBeginning){
+          Serial.print(EEPROM.read((i*4)+y), HEX);
+          Serial.print(' ');
+        }
+        if(y == 3){
+          Serial.println();
+        }
+      }
+    }
+  }
+  zeroBeginning = false;
 }
 
 byte enterCardIndex(){
@@ -465,7 +497,7 @@ void isCardAdmin(){
           login();
           break;
         case 1: 
-          //addCard();
+          addCard();
           break;
         case 2:
           viewCards();
@@ -473,7 +505,7 @@ void isCardAdmin(){
           break;
         case 3:
           viewCards();
-          //deleteCards();
+          deleteCards();
           break; 
         case 4:
           viewCards();
@@ -536,9 +568,7 @@ void setup()
   }
   interruptConfig();
   //Load cards from EEPROM to variable
-  global |= 1 << ADMIN_MENU;
-  viewCards();
-  global &= ~(1 << ADMIN_MENU);
+  viewCards(true);
   Serial.println(F("Approximate your card to the reader..."));
   
   displayDimSetup();

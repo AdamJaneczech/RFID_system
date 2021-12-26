@@ -1,8 +1,6 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-boolean allowed = false;
-
 void logout(void);
 void homeScreen(void);
 void clearDimTimer(void);
@@ -10,10 +8,10 @@ void clearDimTimer(void);
 ISR(PCINT0_vect){   //STOP_BUTTON
     cli();
     Serial.println("STOP");
-    if(allowed || (global & 1 << ADMIN_MENU)){
+    if((global & 1 << ALLOWED) || (global & 1 << ADMIN_MENU)){
         global &= ~(1 << DIM_FLAG);
         clearDimTimer();
-        allowed = false;
+        global &= ~(1 << ALLOWED);
         global &= ~(1 << ADMIN_MENU);
         global &= ~(1 << ADMIN_CARD); //if STOP_BUTTON is pushed during admin option selection, the next condition won't be fulfilles 
         digitalWrite(RELAY, HIGH);

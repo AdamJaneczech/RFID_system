@@ -21,6 +21,7 @@
 #define PRESSED 3
 #define DIM_FLAG 4
 #define SCROLL_FLAG 5
+#define ALLOWED 6
 //Relay pin
 #define RELAY 9
 //OLED display name
