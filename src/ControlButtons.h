@@ -10,12 +10,12 @@ void clearDimTimer(void);
 ISR(PCINT0_vect){   //STOP_BUTTON
     cli();
     Serial.println("STOP");
-    if(allowed || adminMenu){
+    if(allowed || (global & 1 << ADMIN_MENU)){
         global &= ~(1 << DIM_FLAG);
         clearDimTimer();
         allowed = false;
-        adminMenu = false;
-        adminCard = false; //if STOP_BUTTON is pushed during admin option selection, the next condition won't be fulfilles 
+        global &= ~(1 << ADMIN_MENU);
+        global &= ~(1 << ADMIN_CARD); //if STOP_BUTTON is pushed during admin option selection, the next condition won't be fulfilles 
         digitalWrite(RELAY, HIGH);
         delay(100);
     }
@@ -25,15 +25,15 @@ ISR(PCINT0_vect){   //STOP_BUTTON
 ISR(PCINT2_vect){  //Control buttons
     cli();
     //alternative if statement
-    Serial.println(PIND, BIN);
+    //Serial.println(PIND, BIN);
     byte bitCheck = (PIND &= ~(1 << PD5)) >> 4; //shift PIND value 4 right -> PD4 at first place, PD7 at 4th place
     Serial.println(bitCheck, BIN);
-    pressed ^= pressed;
-    if(!pressed){    
+    global ^= (1 << PRESSED);
+    if((global & 1 << PRESSED)){
         if(bitCheck == 0b1){    //OK button
             //Serial.println("OK");
-            if(adminMenu){
-                adminMenu = false;
+            if(global & 1 << ADMIN_MENU){
+                global &= ~(1 << ADMIN_MENU);
                 global &= ~(1 << DIM_FLAG);
                 clearDimTimer();
             }
@@ -43,7 +43,7 @@ ISR(PCINT2_vect){  //Control buttons
         }
         else if(bitCheck == 0b100){ //UP button
             //Serial.println("UP");
-            if(adminMenu){
+            if(global & 1 << ADMIN_MENU){
                 global &= ~(1 << DIM_FLAG);
                 clearDimTimer();
                 if(option < 4){
@@ -55,7 +55,7 @@ ISR(PCINT2_vect){  //Control buttons
         }
         else if(bitCheck == 0b1000){ //DOWN button
             //Serial.println("DOWN");
-            if(adminMenu){
+            if(global & 1 << ADMIN_MENU){
                 global &= ~(1 << DIM_FLAG);
                 clearDimTimer();
                 if(option > 0){

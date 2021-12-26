@@ -11,14 +11,14 @@ byte option = 0;  //selected option - aadmin menu
 
 String cardString[4]; //the active card number converted to string
 
-uint8_t global = 0b00000000;  //the global booleans are on specific bits (see Config.h)
+volatile uint8_t global = 0b00000000;  //the global booleans are on specific bits (see Config.h)
 
-boolean adminCard = false;  //determine whether the card is admin
-boolean registered = false; //determine whether the card is registered
-boolean adminMenu = false;  //activating/closing the admin menu
-boolean pressed = false;  //PCINT generates 2 interrupts (rising/falling) -> change the needed parameter just once by this boolean
+//boolean adminCard = false;  //determine whether the card is admin
+//boolean registered = false; //determine whether the card is registered
+//boolean adminMenu = false;  //activating/closing the admin menu
+//boolean pressed = false;  //PCINT generates 2 interrupts (rising/falling) -> change the needed parameter just once by this boolean
 //uint8_t dimFlag = false;  //flag to dim the display after timer interrupt
-boolean scrollFlag = false;
+//boolean scrollFlag = false;
 
 //admin options to display; their length is calculated; | used to separate the options
 const char* adminOptions[] = {(char*)"Login|", (char*)"Add ID|", (char*)"Add admin|", (char*)"Delete ID|", (char*)"View IDs|"};
@@ -139,23 +139,23 @@ void getCardNumber(){
 
 void isCardRegistered(){ //modified here -> EEPROM direct reading
   Serial.println();
-  registered = false;
-  adminCard = false;
-  for(int i = 0; i <= MAX_EEPROM + 1 - ADMIN_CARDS * 4 && !registered; i += 4){
+  global &= ~(1 << REGISTERED);
+  global &= ~(1 << ADMIN_CARD);
+  for(int i = 0; i <= MAX_EEPROM + 1 - ADMIN_CARDS * 4 && !(global & 1 << REGISTERED); i += 4){
     for(int y = i; y < i + 4; y++){
       if(EEPROM.read(y) == actualCard[y-i] && y == i){
-        registered = true;
+        global |= 1 << REGISTERED;
         Serial.println(F("OK"));
       }
-      if(EEPROM.read(y) == actualCard[y-i] && y != i && registered){
+      if(EEPROM.read(y) == actualCard[y-i] && y != i && (global & 1 << REGISTERED)){
         Serial.println(F("OK"));
       }
       if(EEPROM.read(y) != actualCard[y-i]){
-        registered = false;
+        global &= ~(1 << REGISTERED);
         break;
       }
     }
-    if(registered){
+    if(global & 1 << REGISTERED){
       actualCardIndex = i/4;  //the card index is 4 bytes long
       DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
       DISPLAY_NAME.setCursor(0,56);
@@ -166,17 +166,17 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
       Serial.print(F("Card registered at: "));
       Serial.println(actualCardIndex);
       for(int index = MAX_EEPROM - ADMIN_CARDS + 1; index <= MAX_EEPROM; index++){
-        adminCard = EEPROM.read(index) == i/4;
-        if(adminCard){
+        global |= ((EEPROM.read(index) == i/4) << ADMIN_CARD);
+        if(global & 1 << ADMIN_CARD){
           break;
         }
       }
     }
-    if(registered && !adminCard){
+    if(global & 1 << REGISTERED && !(global & 1 << ADMIN_CARD)){
       login();
       break;
     }
-    if(!registered && i == MAX_EEPROM + 1 - ADMIN_CARDS * 4){
+    if(!(global & 1 << REGISTERED) && i == MAX_EEPROM + 1 - ADMIN_CARDS * 4){
       Serial.println(F("ID not yet registered"));
       DISPLAY_NAME.setCursor(0,56);
       DISPLAY_NAME.print(F("ID not yet registered"));
@@ -205,7 +205,7 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
   getCardInfo();
   isCardRegistered();
   //If the card is NOT registered
-  if(!registered){  //EEPROM direct reading -> modify here
+  if(!(global & 1 << REGISTERED)){  //EEPROM direct reading -> modify here
     Serial.println(F("New card number: "));
     for(int i = 0; i < mfrc522.uid.size; i++){
       if(cardCount < ((MAX_EEPROM + 1) / 4) - ADMIN_CARDS){
@@ -236,12 +236,12 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
     printText((char*)"New card index: ", 0, 56, 1, WHITE);
     displayText(lowestEmptyIndex);
     DISPLAY_NAME.flush();
-    while(adminMenu){
+    while(global & 1 << ADMIN_MENU){
       ;
     }
   }
   //If the card IS registered
-  else if(registered){
+  else if(global & 1 << REGISTERED){
     Serial.println(F("Card is already registered"));
   }
 }*/
@@ -254,7 +254,7 @@ void viewCards(){ //Loads the card nums from EEPROM
   option = 0; //set the cursor to the first index by making the option variable 0
   byte prevOption = 1;
   Serial.println("Entered a loop");
-  while(adminMenu){
+  while(global & 1 << ADMIN_MENU){
     Serial.println("pong");
     if(prevOption != option){
       DISPLAY_NAME.fillRect(0,0,8,128,BLACK);
@@ -362,13 +362,13 @@ void makeCardAdmin(){
 }
 
 void isCardAdmin(){
-  if(adminCard){
+  if(global & 1 << ADMIN_CARD){
     cleanSerial();
     global &= ~(1 << DIM_FLAG);
     clearDimTimer();
 
     boolean noChar = false;
-    adminMenu = true;
+    global |= 1 << ADMIN_MENU;
     option = 0;
 
     Serial.println(F("Administrator card inserted"));
@@ -393,7 +393,7 @@ void isCardAdmin(){
     uint8_t optionLength = 0;
     //option++; //tentative -> for testing only
 
-    while(!Serial.available() && adminMenu){
+    while(!Serial.available() && (global & 1 << ADMIN_MENU)){
       if(prevOption != option){
         Serial.println("CONDITION");
         optionLength = 0;
@@ -407,7 +407,7 @@ void isCardAdmin(){
       }
       if(optionLength >= 5){
         //scroll forward loop
-        for(byte i = 0; i <= (optionLength - 5) * 12 && adminMenu && prevOption == option; i++){ //space for 5 letters
+        for(byte i = 0; i <= (optionLength - 5) * 12 && (global & 1 << ADMIN_MENU) && prevOption == option; i++){ //space for 5 letters
           DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
           DISPLAY_NAME.setCursor(2-i, 22);
           DISPLAY_NAME.setTextColor(WHITE);
@@ -426,7 +426,7 @@ void isCardAdmin(){
           }
         }
         //scroll back loop
-        for(byte i = (optionLength - 5) * 12 ; i > 0 && adminMenu && prevOption == option; i -= 3){ //space for 5 letters
+        for(byte i = (optionLength - 5) * 12 ; i > 0 && (global & 1 << ADMIN_MENU) && prevOption == option; i -= 3){ //space for 5 letters
           DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
           DISPLAY_NAME.setCursor(2-i, 22);
           DISPLAY_NAME.setTextColor(WHITE);
@@ -456,10 +456,10 @@ void isCardAdmin(){
         option = Serial.read() - 48; //Just 1st digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)
         cleanSerial(); //Added this loop because of ASCII line break command
     }
-    adminMenu = true; //prepare for the next menu level
+    global |= 1 << ADMIN_MENU; //prepare for the next menu level
     //Here, code after interrupt (OK_BUTTON) happens
     Serial.println(option);
-    if(adminCard){
+    if(global & 1 << ADMIN_CARD){
       switch(option){
         case 0:
           login();
@@ -479,7 +479,8 @@ void isCardAdmin(){
           viewCards();
           break;
         default:
-          Serial.print("No option for value: " + String(option));
+          Serial.print("No option for value: ");
+          Serial.println(option);
       }
     }
     else{
@@ -494,7 +495,7 @@ void setup()
   SPI.begin();      // Initiate  SPI bus
   mfrc522.PCD_Init();   // Initiate MFRC522
 
-  adminMenu = false;
+  global &= ~(1 << ADMIN_MENU);
 
   DISPLAY_NAME.begin(SSD1306_SWITCHCAPVCC, 0x3C);
 
@@ -535,9 +536,9 @@ void setup()
   }
   interruptConfig();
   //Load cards from EEPROM to variable
-  adminMenu = true;
+  global |= 1 << ADMIN_MENU;
   viewCards();
-  adminMenu = false;
+  global &= ~(1 << ADMIN_MENU);
   Serial.println(F("Approximate your card to the reader..."));
   
   displayDimSetup();
