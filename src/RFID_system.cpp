@@ -434,12 +434,13 @@ void isCardAdmin(){
     DISPLAY_NAME.fillRoundRect(0,0,64,21,2,WHITE);
     displayText((char*)"Admin", 2, 3, 2, BLACK);
 
-    DISPLAY_NAME.drawRoundRect(0,22,68,21,2,WHITE);
+    DISPLAY_NAME.drawRoundRect(0,22,64,20,2,WHITE);
     DISPLAY_NAME.setCursor(2, 24);
     DISPLAY_NAME.setTextColor(WHITE);
-    DISPLAY_NAME.print(adminOptions[option]);
+    for(byte x = 0; x < sizeof(adminOptions[option]); x++){
+      DISPLAY_NAME.print(adminOptions[option][x]);
+    }
     DISPLAY_NAME.display();
-
     byte prevOption = 1;
     uint8_t optionLength = 0;
     //option++; //tentative -> for testing only
