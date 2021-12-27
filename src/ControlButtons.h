@@ -44,7 +44,7 @@ ISR(PCINT2_vect){  //Control buttons
             if(global & 1 << ADMIN_MENU){
                 global &= ~(1 << DIM_FLAG);
                 clearDimTimer();
-                if(option < 4){
+                if(option < maxOption && option >= 0){
                     option++;
                 }
             }
@@ -56,7 +56,7 @@ ISR(PCINT2_vect){  //Control buttons
             if(global & 1 << ADMIN_MENU){
                 global &= ~(1 << DIM_FLAG);
                 clearDimTimer();
-                if(option > 0){
+                if(option > 0 && option <= maxOption){
                     option--;
                 }
             }

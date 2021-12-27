@@ -8,6 +8,8 @@ byte actualCardIndex; //variable for storing the actual card index
 byte cardCount = 1; //variable for storing the amount of loaded cards
 byte lowestEmptyIndex;  //the lowest index for storing a card into EEPROM is saved in this variable
 byte option = 0;  //selected option - aadmin menu
+byte maxOption;
+byte selectedCardIndex; //when selecting a specific card for deletion/admin rights/other
 
 volatile uint8_t global = 0b00000000;  //the global booleans are on specific bits (see Config.h)
 
@@ -240,36 +242,32 @@ void addCard(){
 }
 
 byte enterCardIndex(){
-  Serial.print(F("Enter card index: "));
+  //Serial.print(F("Enter card index: "));
   byte cardIndex = 0;
-  if(!(global & 1 << ADMIN_MENU)){
-    cleanSerial();
-    while(!(Serial.available() > 0)){
-      ;
-    }
-    byte received[3] = {};
-    byte i = 0;
-    while(Serial.available()){
-      //Serial.flush();
-      received[i] = Serial.read();
-      Serial.println(received[i]);
-      i++;
-    }
-    Serial.print(received[1]);
-    Serial.println(F(" after"));
-    for(byte b = 0; b < i-2; b++){
-      cardIndex += byte(pow(10, (i-b-3)) * (received[b]-48));
-    }
+  /*cleanSerial();
+  while(!(Serial.available() > 0)){
+    ;
+  }*/
+  byte received[3] = {};
+  byte i = 0;
+  while(Serial.available()){
+    //Serial.flush();
+    received[i] = Serial.read();
+    Serial.println(received[i]);
+    i++;
   }
-  else if(global & 1 << ADMIN_MENU){
-    cardIndex = option;
+  Serial.print(received[1]);
+  Serial.println(F(" after"));
+  for(byte b = 0; b < i-2; b++){
+    cardIndex += byte(pow(10, (i-b-3)) * (received[b]-48));
   }
   return cardIndex;
 }
 
 void viewCards(){ //Loads the card nums from EEPROM
   DISPLAY_NAME.clearDisplay();
-  DISPLAY_NAME.flush();
+  maxOption = cardCount - 1;
+  byte cursorY = 2;
   boolean zeroBeginning = false;  //This variable determines whether the card begins with 0xFF (this function could later be removed)
   byte displayLine = 0; //set the display line
   option = 0; //set the cursor to the first index by making the option variable 0
@@ -277,8 +275,18 @@ void viewCards(){ //Loads the card nums from EEPROM
   Serial.println("Entered a loop");
   while((global & 1 << ADMIN_MENU) && !Serial.available()){
     if(prevOption != option){
-      DISPLAY_NAME.fillRect(0,0,8,128,BLACK);
-      DISPLAY_NAME.drawRect(2, option * 8 + 2, 4, 4, WHITE);
+      DISPLAY_NAME.fillRect(0,0,8,64,BLACK);
+      if(prevOption < option){
+        if(cursorY <= 50){
+          cursorY += 8;
+        }
+      }
+      if(prevOption > option){
+        if(cursorY >= 10){
+          cursorY -= 8;
+        }
+      }
+      DISPLAY_NAME.drawRect(2, cursorY, 4, 4, WHITE);
       displayLine = 0;
       for(byte i = 0; i < (MAX_EEPROM + 1 - ADMIN_CARDS) / 4; i++){
         for(byte y = 0; y < 4; y++){
@@ -315,6 +323,12 @@ void viewCards(){ //Loads the card nums from EEPROM
             }
             if(y == 3){
               Serial.println();
+              selectedCardIndex = i;
+              for(byte admin = 0; admin < ADMIN_CARDS; admin++){
+                if(EEPROM.read(MAX_EEPROM - ADMIN_CARDS + 1 + admin) == i){
+                  printText("A", 120, 8*displayLine, 1, WHITE);
+                }
+              }
               displayLine++;
             }
           }
@@ -324,6 +338,9 @@ void viewCards(){ //Loads the card nums from EEPROM
       DISPLAY_NAME.display();
       prevOption = option;
     }
+  }
+  if(Serial.available() > 0){
+    selectedCardIndex = enterCardIndex();
   }
 }
 
@@ -366,10 +383,7 @@ void viewCards(boolean firstTime){ //Loads the card nums from EEPROM
   zeroBeginning = false;
 }
 
-void deleteCards(){
-  Serial.print(F("Select card index: "));
-  viewCards();
-  byte cardIndex = enterCardIndex();
+void deleteCards(byte cardIndex){
   for(int i = MAX_EEPROM + 1 - ADMIN_CARDS; i <= MAX_EEPROM; i++){
     if(EEPROM.read(i) == cardIndex){
       EEPROM.write(i, 0xFF);
@@ -379,12 +393,12 @@ void deleteCards(){
     EEPROM.write(cardIndex * 4 + b, 0xFF);
   }
   getCardInfo();
-  viewCards();
+  viewCards(true);
+  homeScreen();
 }
 
-void makeCardAdmin(){
+void makeCardAdmin(byte cardIndex){
   //cardIndex += 1; //something causes the cardIndex variable to be decreased by 1 after the calculation
-  byte cardIndex = enterCardIndex();
   Serial.println(cardIndex);
   for(int a = MAX_EEPROM - ADMIN_CARDS + 1; a <= MAX_EEPROM; a++){
     if(EEPROM.read(a) == 0xFF){
@@ -399,6 +413,7 @@ void makeCardAdmin(){
 
 void isCardAdmin(){
   if(global & 1 << ADMIN_CARD){
+    maxOption = sizeof(adminOptions) / 2 - 1;  //determine the maximum option size
     cleanSerial();
     global &= ~(1 << DIM_FLAG);
     clearDimTimer();
@@ -505,11 +520,11 @@ void isCardAdmin(){
           break;
         case 2:
           viewCards();
-          makeCardAdmin();
+          makeCardAdmin(selectedCardIndex);
           break;
         case 3:
           viewCards();
-          deleteCards();
+          deleteCards(selectedCardIndex);
           break; 
         case 4:
           viewCards();
