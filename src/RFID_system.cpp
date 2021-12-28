@@ -182,6 +182,7 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
 
 void addCard(){
   Serial.println(F("Approximate new card to the reader..."));
+  homeScreen(false);  //don't display yet
   clearDisplayLine(6,2);
   displayText((char*)"Approach the new card", 0, 56, 1, WHITE);
   // Look for new cards
@@ -214,8 +215,6 @@ void addCard(){
       printText((actualCard[i], HEX), 0, 48, 1, WHITE);
       //----//
     }
-    DISPLAY_NAME.display();
-    DISPLAY_NAME.flush();
     Serial.print(F("Card "));
     for(int i = 0; i < 4; i++){
       Serial.print(actualCard[i]);
@@ -229,11 +228,17 @@ void addCard(){
     Serial.println(cardCount);
     clearDisplayLine(7,1);
     printText((char*)"New card index: ", 0, 56, 1, WHITE);
-    displayText(lowestEmptyIndex);
-    DISPLAY_NAME.flush();
+    displayText(lowestEmptyIndex);  //display all other text & shapes defined before
+    clearDimTimer();
+    global &= ~(1 << DIM_FLAG);
+    while(global & 1 << ADMIN_MENU && !(global & 1 << DIM_FLAG)){
+      ;
+    }
+    DISPLAY_NAME.dim(true);
     while(global & 1 << ADMIN_MENU){
       ;
     }
+    homeScreen();
   }
   //If the card IS registered
   else if(global & 1 << REGISTERED){
@@ -506,6 +511,14 @@ void isCardAdmin(){
     }
     if(Serial.available() > 0){ //in case of serial input
         option = Serial.read() - 48; //Just 1st digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)
+          DISPLAY_NAME.fillRect(0,23,68,24,BLACK);
+          DISPLAY_NAME.setCursor(2, 24);
+          DISPLAY_NAME.setTextColor(WHITE);
+          DISPLAY_NAME.print(adminOptions[option]);
+          DISPLAY_NAME.fillRect(62,22,68,20,BLACK);
+          DISPLAY_NAME.drawRoundRect(0,22,64,20,2,WHITE);
+          DISPLAY_NAME.drawBitmap(72,0,gymkrenLogo,56,56,BLACK, WHITE);
+          DISPLAY_NAME.display();
         cleanSerial(); //Added this loop because of ASCII line break command
     }
     global |= 1 << ADMIN_MENU; //prepare for the next menu level

@@ -98,7 +98,7 @@ void homeScreen(){
     DISPLAY_NAME.display();
 }
 
-void homeScreen(boolean firstTime){
+void homeScreen(boolean firstTimeDisplay){
     DISPLAY_NAME.clearDisplay();
     DISPLAY_NAME.drawBitmap(128-56,0,gymkrenLogo,56,56,BLACK, WHITE);
 
@@ -106,6 +106,8 @@ void homeScreen(boolean firstTime){
     DISPLAY_NAME.drawRoundRect(0,0,64,21,2,WHITE);
     DISPLAY_NAME.fillRect(0,56,128,8,BLACK);
 
-    printText((char*)"Saved cards: ", 0, 56, 1, WHITE);
-    displayText(cardCount);
+    if(firstTimeDisplay){
+        printText((char*)"Saved cards: ", 0, 56, 1, WHITE);
+        displayText(cardCount);
+    }
 }
