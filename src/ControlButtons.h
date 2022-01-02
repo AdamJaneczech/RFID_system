@@ -7,8 +7,8 @@ void clearDimTimer(void);
 
 ISR(PCINT0_vect){   //STOP_BUTTON
     cli();
-    Serial.println("STOP");
     if((global & 1 << ALLOWED) || (global & 1 << ADMIN_MENU)){
+        Serial.println("STOP");
         global &= ~(1 << DIM_FLAG);
         clearDimTimer();
         global &= ~(1 << ALLOWED);
@@ -22,15 +22,13 @@ ISR(PCINT0_vect){   //STOP_BUTTON
 
 ISR(PCINT2_vect){  //Control buttons
     cli();
-    //alternative if statement
-    //Serial.println(PIND, BIN);
     byte bitCheck = (PIND &= ~(1 << PD5)) >> 4; //shift PIND value 4 right -> PD4 at first place, PD7 at 4th place
-    Serial.println(bitCheck, BIN);
+    //Serial.println(bitCheck, BIN);
     global ^= (1 << PRESSED);
     if((global & 1 << PRESSED)){
         if(bitCheck == 0b1){    //OK button
-            //Serial.println("OK");
             if(global & 1 << ADMIN_MENU){
+                Serial.println("OK");
                 global &= ~(1 << ADMIN_MENU);
                 global &= ~(1 << DIM_FLAG);
                 clearDimTimer();
@@ -47,9 +45,10 @@ ISR(PCINT2_vect){  //Control buttons
                 if(option < maxOption && option >= 0){
                     option++;
                 }
+                Serial.print("Option ");
+                Serial.print(option);
+                Serial.print(": ");
             }
-            Serial.print("Option ");
-            Serial.println(option);
         }
         else if(bitCheck == 0b1000){ //DOWN button
             //Serial.println("DOWN");
@@ -59,9 +58,10 @@ ISR(PCINT2_vect){  //Control buttons
                 if(option > 0 && option <= maxOption){
                     option--;
                 }
+                Serial.print("Option ");
+                Serial.print(option);
+                Serial.print(": ");
             }
-            Serial.print("Option ");
-            Serial.println(option);
         }
     }
     sei();

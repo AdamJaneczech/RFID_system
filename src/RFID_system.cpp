@@ -128,6 +128,7 @@ void getCardNumber(){
     Serial.print(actualCard[i], HEX /*+ " "*/);
     DISPLAY_NAME.print(actualCard[i], HEX);
   }
+  Serial.println();
   DISPLAY_NAME.display();
 }
 
@@ -195,6 +196,7 @@ void addCard(){
   {
     ;
   }
+  mfrc522.PICC_HaltA(); //stop the reading
   //Check if the card is registered
   getCardNumber();
   getCardInfo();
@@ -211,31 +213,32 @@ void addCard(){
         Serial.print('0');
         printText((char*)"0", 0, 48);
       }
-      Serial.print(actualCard[i]);
+      Serial.print(actualCard[i], HEX);
       printText((actualCard[i], HEX), 0, 48, 1, WHITE);
       //----//
     }
+    Serial.println();
     Serial.print(F("Card "));
     for(int i = 0; i < 4; i++){
-      Serial.print(actualCard[i]);
+      Serial.print(actualCard[i], HEX);
       Serial.print(' ');
     }
-    Serial.print("stored as number ");
+    Serial.print(F("stored as number "));
     Serial.print(lowestEmptyIndex);
-    Serial.println(" in the database.");
+    Serial.println(F(" in the database."));
     cardCount++;
-    Serial.print("Actual number of stored cards: "); 
+    Serial.print(F("Actual number of stored cards: ")); 
     Serial.println(cardCount);
     clearDisplayLine(7,1);
     printText((char*)"New card index: ", 0, 56, 1, WHITE);
     displayText(lowestEmptyIndex);  //display all other text & shapes defined before
     clearDimTimer();
     global &= ~(1 << DIM_FLAG);
-    while(global & 1 << ADMIN_MENU && !(global & 1 << DIM_FLAG)){
+    while(global & 1 << ADMIN_MENU && !(global & 1 << DIM_FLAG) && !Serial.available() > 0){
       ;
     }
     DISPLAY_NAME.dim(true);
-    while(global & 1 << ADMIN_MENU){
+    while(global & 1 << ADMIN_MENU && !Serial.available() > 0){
       ;
     }
     homeScreen();
@@ -261,8 +264,8 @@ byte enterCardIndex(){
     Serial.println(received[i]);
     i++;
   }
-  Serial.print(received[1]);
-  Serial.println(F(" after"));
+  //Serial.print(received[1]);
+  //Serial.println(F(" after"));
   for(byte b = 0; b < i-2; b++){
     cardIndex += byte(pow(10, (i-b-3)) * (received[b]-48));
   }
@@ -277,7 +280,7 @@ void viewCards(){ //Loads the card nums from EEPROM
   byte displayLine = 0; //set the display line
   option = 0; //set the cursor to the first index by making the option variable 0
   byte prevOption = 1;
-  Serial.println("Entered a loop");
+  //Serial.println("Entered a loop");
   while((global & 1 << ADMIN_MENU) && !Serial.available()){
     if(prevOption != option){
       DISPLAY_NAME.fillRect(0,0,8,64,BLACK);
@@ -351,7 +354,7 @@ void viewCards(){ //Loads the card nums from EEPROM
 
 void viewCards(boolean firstTime){ //Loads the card nums from EEPROM
   boolean zeroBeginning = false;  //This variable determines whether the card begins with 0xFF (this function could later be removed)
-  Serial.println("Entered a loop");
+  //Serial.println("Entered a loop");
   for(byte i = 0; i < (MAX_EEPROM + 1 - ADMIN_CARDS) / 4; i++){
     for(byte y = 0; y < 4; y++){
       if(EEPROM.read((i*4)+y) == 0xFF){
@@ -404,7 +407,7 @@ void deleteCards(byte cardIndex){
 
 void makeCardAdmin(byte cardIndex){
   //cardIndex += 1; //something causes the cardIndex variable to be decreased by 1 after the calculation
-  Serial.println(cardIndex);
+  //Serial.println(cardIndex);
   for(int a = MAX_EEPROM - ADMIN_CARDS + 1; a <= MAX_EEPROM; a++){
     if(EEPROM.read(a) == 0xFF){
       EEPROM.write(a, cardIndex);
@@ -452,7 +455,7 @@ void isCardAdmin(){
 
     while(!Serial.available() && (global & 1 << ADMIN_MENU)){
       if(prevOption != option){
-        Serial.println("CONDITION");
+        //Serial.println("CONDITION");
         optionLength = 0;
         printText(adminOptions[option], 2, 24, 2, WHITE);
         //for loop for determineing the option size (divided with '|')
@@ -460,7 +463,10 @@ void isCardAdmin(){
           optionLength++;
         }
         prevOption = option;
-        Serial.println(optionLength);
+        for(byte i = 0; i < optionLength; i++){
+          Serial.print(adminOptions[option][i]);
+        }
+        Serial.println();
       }
       if(optionLength >= 5){
         //scroll forward loop
@@ -511,19 +517,19 @@ void isCardAdmin(){
     }
     if(Serial.available() > 0){ //in case of serial input
         option = Serial.read() - 48; //Just 1st digit; -48 added because the Serial data are being sent as ASCII characters (0 is 48 in ASCII)
-          DISPLAY_NAME.fillRect(0,23,68,24,BLACK);
-          DISPLAY_NAME.setCursor(2, 24);
-          DISPLAY_NAME.setTextColor(WHITE);
-          DISPLAY_NAME.print(adminOptions[option]);
-          DISPLAY_NAME.fillRect(62,22,68,20,BLACK);
-          DISPLAY_NAME.drawRoundRect(0,22,64,20,2,WHITE);
-          DISPLAY_NAME.drawBitmap(72,0,gymkrenLogo,56,56,BLACK, WHITE);
-          DISPLAY_NAME.display();
+        DISPLAY_NAME.fillRect(0,23,68,24,BLACK);
+        DISPLAY_NAME.setCursor(2, 24);
+        DISPLAY_NAME.setTextColor(WHITE);
+        DISPLAY_NAME.print(adminOptions[option]);
+        DISPLAY_NAME.fillRect(62,22,68,20,BLACK);
+        DISPLAY_NAME.drawRoundRect(0,22,64,20,2,WHITE);
+        DISPLAY_NAME.drawBitmap(72,0,gymkrenLogo,56,56,BLACK, WHITE);
+        DISPLAY_NAME.display();
         cleanSerial(); //Added this loop because of ASCII line break command
     }
     global |= 1 << ADMIN_MENU; //prepare for the next menu level
     //Here, code after interrupt (OK_BUTTON) happens
-    Serial.println(option);
+    //Serial.println(option);
     if(global & 1 << ADMIN_CARD){
       switch(option){
         case 0:
@@ -560,7 +566,7 @@ void setup()
   Serial.begin(BAUDRATE);   // Initiate a serial communication
   SPI.begin();      // Initiate  SPI bus
   mfrc522.PCD_Init();   // Initiate MFRC522
-
+  
   global &= ~(1 << ADMIN_MENU);
 
   DISPLAY_NAME.begin(SSD1306_SWITCHCAPVCC, 0x3C);
@@ -628,6 +634,8 @@ void loop(){
     return;
   }
 
+  mfrc522.PICC_HaltA(); //stop the reading
+
   DISPLAY_NAME.dim(false);
   clearDimTimer();  //start the dim timer from 0
 
@@ -639,5 +647,9 @@ void loop(){
   //Check if the inserted card has admin permissions:
   isCardAdmin();
   //
+  for(byte b = 0; b < 50; b++){ //divide the readings
+    Serial.print('=');
+  }
+  Serial.println();
   delay(2000);
 }
