@@ -14,6 +14,8 @@
 #define DOWN_BUTTON PD7
 #define OK_BUTTON PD4
 #define STOP_BUTTON PB0
+//Buzzer configuration
+#define BUZZER 3
 //Boolean 8-bit variable configuration
 #define ADMIN_CARD 0
 #define REGISTERED 1
