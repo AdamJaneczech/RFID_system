@@ -24,6 +24,7 @@ volatile uint8_t global = 0b00000000;  //the global booleans are on specific bit
 const char* adminOptions[] = {(char*)"Login|", (char*)"Add ID|", (char*)"Add admin|", (char*)"Delete ID|", (char*)"View IDs|"};
 
 #include <Config.h>
+#include <Buzzer.h>
 #include <ControlButtons.h>
 #include <OLED_icons.h>
 #include <DisplayFunctions.h>
@@ -607,6 +608,7 @@ void setup()
     Serial.println(F("no cards loaded"));
   }
   interruptConfig();
+  buzzerSetup();
   //Load cards from EEPROM to variable
   viewCards(true);
   Serial.println(F("Approximate your card to the reader..."));
