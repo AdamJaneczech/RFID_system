@@ -11,7 +11,6 @@ void displayDimSetup(){
     TCNT1  = 0; //counter value = 0
     TCCR1B |= (1 << WGM12)|(1 << CS12)|(1 << CS10);    //set the waveform generation mode & prescaler to clk/1024 (datasheet)
     OCR1A |= 62500; //4-second interval
-    OCR1B |= 31250; //2-second scroll interval
     TIMSK1 |= (1 << OCIE1B)|(1 << OCIE1A);   //output compare match enable
 }
 
@@ -23,7 +22,7 @@ ISR(TIMER1_COMPA_vect){
 
 ISR(TIMER1_COMPB_vect){
     cli();  //disable interrupts
-    global |= 1 << SCROLL_FLAG;
+    //empty unused interrupt
     sei();  //enable interrupts
 }
 
