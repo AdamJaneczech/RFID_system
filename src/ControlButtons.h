@@ -15,7 +15,7 @@ ISR(PCINT0_vect){   //STOP_BUTTON
         global &= ~(1 << ADMIN_MENU);
         global &= ~(1 << ADMIN_CARD); //if STOP_BUTTON is pushed during admin option selection, the next condition won't be fulfilles 
         digitalWrite(RELAY, HIGH);
-        delay(100);
+        //delay(100);
     }
     sei();
 }
