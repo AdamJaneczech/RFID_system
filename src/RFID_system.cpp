@@ -437,7 +437,7 @@ void isCardAdmin(){
     displayText((char*)"Admin", 2, 3, 2, BLACK);
 
     DISPLAY_NAME.drawRoundRect(0,22,64,20,2,WHITE);
-    DISPLAY_NAME.setCursor(2, 24);
+    DISPLAY_NAME.setCursor(3, 24);
     DISPLAY_NAME.setTextColor(WHITE);
     for(byte x = 0; x < sizeof(adminOptions[option]); x++){
       DISPLAY_NAME.print(adminOptions[option][x]);
@@ -451,7 +451,7 @@ void isCardAdmin(){
       if(prevOption != option){
         //Serial.println("CONDITION");
         optionLength = 0;
-        printText(adminOptions[option], 2, 24, 2, WHITE);
+        printText(adminOptions[option], 3, 24, 2, WHITE);
         //for loop for determineing the option size (divided with '|')
         while(adminOptions[option][optionLength] != '|'){
           optionLength++;
@@ -466,7 +466,7 @@ void isCardAdmin(){
         //scroll forward loop
         for(byte i = 0; i <= (optionLength - 5) * 12 && (global & 1 << ADMIN_MENU) && prevOption == option; i++){ //space for 5 letters
           DISPLAY_NAME.fillRect(0,23,68,24,BLACK);
-          DISPLAY_NAME.setCursor(2-i, 24);
+          DISPLAY_NAME.setCursor(3-i, 24);
           DISPLAY_NAME.setTextColor(WHITE);
           for(byte x = 0; x < optionLength; x++){
             DISPLAY_NAME.print(adminOptions[option][x]);
@@ -482,10 +482,17 @@ void isCardAdmin(){
             DISPLAY_NAME.dim(false);
           }
         }
+        //here the code would be use to stop the scrolling text, however this interrupts the dim timeout by clearing the timer
+        /*global &= ~(1 << SCROLL_FLAG); //Write 1 to the scroll flag
+        clearDimTimer();
+        while((global & 1 << ADMIN_MENU) && prevOption == option && !(global & 1 << SCROLL_FLAG)){
+          
+        }
+        clearDimTimer();*/
         //scroll back loop
         for(byte i = (optionLength - 5) * 12 ; i > 0 && (global & 1 << ADMIN_MENU) && prevOption == option; i -= 3){ //space for 5 letters
           DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
-          DISPLAY_NAME.setCursor(2-i, 24);
+          DISPLAY_NAME.setCursor(3-i, 24);
           DISPLAY_NAME.setTextColor(WHITE);
           for(byte x = 0; x < optionLength; x++){
             DISPLAY_NAME.print(adminOptions[option][x]);
@@ -500,11 +507,6 @@ void isCardAdmin(){
           else{
             DISPLAY_NAME.dim(false);
           }
-        }
-        //DIDN'T WORK - let's try this time, otherwise delete
-        clearDimTimer();
-        while((global & 1 << ADMIN_MENU) && prevOption == option && !(global & 1 << SCROLL_FLAG)){
-          delayMicroseconds(1);
         }
       }
     }
