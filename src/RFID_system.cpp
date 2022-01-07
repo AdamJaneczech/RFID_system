@@ -13,13 +13,6 @@ byte selectedCardIndex; //when selecting a specific card for deletion/admin righ
 
 volatile uint8_t global = 0b00000000;  //the global booleans are on specific bits (see Config.h)
 
-//boolean adminCard = false;  //determine whether the card is admin
-//boolean registered = false; //determine whether the card is registered
-//boolean adminMenu = false;  //activating/closing the admin menu
-//boolean pressed = false;  //PCINT generates 2 interrupts (rising/falling) -> change the needed parameter just once by this boolean
-//uint8_t dimFlag = false;  //flag to dim the display after timer interrupt
-//boolean scrollFlag = false;
-
 //admin options to display; their length is calculated; | used to separate the options
 const char* adminOptions[] = {(char*)"Login|", (char*)"Add ID|", (char*)"Add admin|", (char*)"Delete ID|", (char*)"View IDs|"};
 
@@ -508,12 +501,11 @@ void isCardAdmin(){
             DISPLAY_NAME.dim(false);
           }
         }
-        //DOESN'T WORK
-        /*clearDimTimer();
-        while(adminMenu && prevOption == option && !scrollFlag){
+        //DIDN'T WORK - let's try this time, otherwise delete
+        clearDimTimer();
+        while((global & 1 << ADMIN_MENU) && prevOption == option && !(global & 1 << SCROLL_FLAG)){
           delayMicroseconds(1);
         }
-        scrollFlag = false;*/
       }
     }
     if(Serial.available() > 0){ //in case of serial input
