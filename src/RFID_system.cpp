@@ -17,7 +17,6 @@ volatile uint8_t global = 0b00000000;  //the global booleans are on specific bit
 const char* adminOptions[] = {(char*)"Login|", (char*)"Add ID|", (char*)"Add admin|", (char*)"Delete ID|", (char*)"View IDs|"};
 
 #include <Config.h>
-#include <Buzzer.h>
 #include <ControlButtons.h>
 #include <OLED_icons.h>
 #include <DisplayFunctions.h>
@@ -41,6 +40,7 @@ void cleanSerial(){
 
 void logout(){
   digitalWrite(RELAY, HIGH);  //turn the relay pin HIGH -> switch it off
+  tone(BUZZER, TONE_HIGH, 100);
   homeScreen();
   Serial.println(F("Logout"));
 }
@@ -48,6 +48,8 @@ void logout(){
 void login(){
   global &= ~(1 << DIM_FLAG);
   clearDimTimer();
+  TIMSK1 |= (1 << OCIE1B);
+  tone(BUZZER, TONE_LOW, 100);
   digitalWrite(RELAY, LOW);
   Serial.println(F("Passed. Login OK"));
   global |= 1 << ALLOWED; //interrupt makes this false
@@ -61,7 +63,7 @@ void login(){
   }
   DISPLAY_NAME.dim(true);
   while(!Serial.available() > 0 && (global & 1 << ALLOWED)){
-    //Serial input or PCINT breaks the loop
+    TIMSK1 &= ~(1 << OCIE1B);
   }
   logout();
 }
@@ -418,6 +420,8 @@ void isCardAdmin(){
     maxOption = sizeof(adminOptions) / 2 - 1;  //determine the maximum option size
     cleanSerial();
     global &= ~(1 << DIM_FLAG);
+    TIMSK1 |= (1 << OCIE1B);
+    tone(BUZZER, TONE_LOW, 100);
     clearDimTimer();
 
     boolean noChar = false;
@@ -477,6 +481,7 @@ void isCardAdmin(){
           DISPLAY_NAME.display();
           if(global & 1 << DIM_FLAG){
             DISPLAY_NAME.dim(true);
+            TIMSK1 &= ~(1 << OCIE1B);
           }
           else{
             DISPLAY_NAME.dim(false);
@@ -503,6 +508,7 @@ void isCardAdmin(){
           DISPLAY_NAME.display();
           if(global & 1 << DIM_FLAG){
             DISPLAY_NAME.dim(true);
+            TIMSK1 &= ~(1 << OCIE1B);
           }
           else{
             DISPLAY_NAME.dim(false);
@@ -553,6 +559,7 @@ void isCardAdmin(){
     else{
       logout();
     }
+    OCR1B |= 1563; //0.1-second interval
   }
 }
 
@@ -602,7 +609,6 @@ void setup()
     Serial.println(F("no cards loaded"));
   }
   interruptConfig();
-  buzzerSetup();
   //Load cards from EEPROM to variable
   viewCards(true);
   Serial.println(F("Approximate your card to the reader..."));
@@ -615,6 +621,7 @@ void loop(){
   // dim the display after reaching the timer interrupt
   if(global & 1 << DIM_FLAG){
     DISPLAY_NAME.dim(global & 1 << DIM_FLAG);
+    TIMSK1 &= ~(1 << OCIE1B);
   }
   else{
     DISPLAY_NAME.dim(global & 1 << DIM_FLAG);

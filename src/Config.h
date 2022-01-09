@@ -16,6 +16,8 @@
 #define STOP_BUTTON PB0
 //Buzzer configuration
 #define BUZZER 3
+#define TONE_LOW 784
+#define TONE_HIGH 1175
 //Boolean 8-bit variable configuration
 #define ADMIN_CARD 0
 #define REGISTERED 1
