@@ -34,7 +34,6 @@ ISR(TIMER1_COMPB_vect){
     else{
         tone(BUZZER, TONE_LOW, 100);
     }
-    //global |= 1 << SCROLL_FLAG; //Write 1 to the scroll flag
     sei();  //enable interrupts
 }
 

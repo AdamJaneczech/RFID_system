@@ -290,7 +290,7 @@ void viewCards(){ //Loads the card nums from EEPROM
           cursorY -= 8;
         }
       }
-      DISPLAY_NAME.drawRect(2, cursorY, 4, 4, WHITE);
+      DISPLAY_NAME.drawRect(2, cursorY, 4, 4, WHITE); //draw the cursor
       displayLine = 0;
       for(byte i = 0; i < (MAX_EEPROM + 1 - ADMIN_CARDS) / 4; i++){
         for(byte y = 0; y < 4; y++){
@@ -304,10 +304,15 @@ void viewCards(){ //Loads the card nums from EEPROM
               Serial.print(F("Index "));
               Serial.print(i);
               Serial.print(F(": "));
-              if(displayLine < 8){
+              if(option <= 8){
                 printText((char*)"Index ", 8, 8*displayLine, 1, WHITE);
                 DISPLAY_NAME.print(i);
-                DISPLAY_NAME.print(": ");
+                DISPLAY_NAME.print((char*)": ");
+              }
+              else{
+                printText((char*)"Index ", 8, (option - 8) * 8, 1, WHITE);
+                DISPLAY_NAME.print(i);
+                DISPLAY_NAME.print((char*)": ");
               }
             }
             if(y > 0 && zeroBeginning){
@@ -349,6 +354,7 @@ void viewCards(){ //Loads the card nums from EEPROM
 }
 
 void viewCards(boolean firstTime){ //Loads the card nums from EEPROM
+  maxOption = cardCount - 1;
   boolean zeroBeginning = false;  //This variable determines whether the card begins with 0xFF (this function could later be removed)
   //Serial.println("Entered a loop");
   for(byte i = 0; i < (MAX_EEPROM + 1 - ADMIN_CARDS) / 4; i++){
@@ -487,13 +493,6 @@ void isCardAdmin(){
             DISPLAY_NAME.dim(false);
           }
         }
-        //here the code would be use to stop the scrolling text, however this interrupts the dim timeout by clearing the timer
-        /*global &= ~(1 << SCROLL_FLAG); //Write 1 to the scroll flag
-        clearDimTimer();
-        while((global & 1 << ADMIN_MENU) && prevOption == option && !(global & 1 << SCROLL_FLAG)){
-          
-        }
-        clearDimTimer();*/
         //scroll back loop
         for(byte i = (optionLength - 5) * 12 ; i > 0 && (global & 1 << ADMIN_MENU) && prevOption == option; i -= 3){ //space for 5 letters
           DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
