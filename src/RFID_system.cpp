@@ -279,16 +279,28 @@ void viewCards(){ //Loads the card nums from EEPROM
   //Serial.println("Entered a loop");
   while((global & 1 << ADMIN_MENU) && !Serial.available()){
     if(prevOption != option){
-      DISPLAY_NAME.fillRect(0,0,8,64,BLACK);
+      DISPLAY_NAME.fillRect(0,0,8,64,BLACK);  //clean the cursor pixels
+      //move the cursor only in the display area
       if(prevOption < option){
         if(cursorY <= 50){
+          global &= ~(1 << SCROLL_FLAG);  
           cursorY += 8;
+        }
+        else{
+          global |= 1 << SCROLL_FLAG;
         }
       }
       if(prevOption > option){
-        if(cursorY >= 10){
+        if(cursorY > 2){
+          global &= ~(1 << SCROLL_FLAG);    
           cursorY -= 8;
         }
+        else{
+          global |= 1 << SCROLL_FLAG;
+        }
+      }
+      if((global & 1 << SCROLL_FLAG) || option == 0){
+        DISPLAY_NAME.clearDisplay();
       }
       DISPLAY_NAME.drawRect(2, cursorY, 4, 4, WHITE); //draw the cursor
       displayLine = 0;
@@ -304,13 +316,8 @@ void viewCards(){ //Loads the card nums from EEPROM
               Serial.print(F("Index "));
               Serial.print(i);
               Serial.print(F(": "));
-              if(option <= 8){
+              if((global & 1 << SCROLL_FLAG) || option == 0){
                 printText((char*)"Index ", 8, 8*displayLine, 1, WHITE);
-                DISPLAY_NAME.print(i);
-                DISPLAY_NAME.print((char*)": ");
-              }
-              else{
-                printText((char*)"Index ", 8, (option - 8) * 8, 1, WHITE);
                 DISPLAY_NAME.print(i);
                 DISPLAY_NAME.print((char*)": ");
               }
@@ -328,7 +335,9 @@ void viewCards(){ //Loads the card nums from EEPROM
             if(!zeroBeginning){
               Serial.print(EEPROM.read((i*4)+y), HEX);
               Serial.print(' ');
-              DISPLAY_NAME.print(EEPROM.read((i*4)+y), HEX);
+              if(global & 1 << SCROLL_FLAG){
+                DISPLAY_NAME.print(EEPROM.read((i*4)+y), HEX);
+              }
             }
             if(y == 3){
               Serial.println();
@@ -338,7 +347,9 @@ void viewCards(){ //Loads the card nums from EEPROM
                   printText("A", 120, 8*displayLine, 1, WHITE);
                 }
               }
-              displayLine++;
+              if(displayLine < 8){
+                displayLine++;
+              }
             }
           }
         }
