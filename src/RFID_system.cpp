@@ -58,11 +58,11 @@ void login(){
   DISPLAY_NAME.fillRect(100,56,128,8,BLACK);  //clear the mysterious sign appearing on the display
   DISPLAY_NAME.fillRoundRect(0,0,72,20,2,WHITE);
   displayText((char*)"Active", 2, 3, 2, BLACK);
-  while(!Serial.available() > 0 && (global & 1 << ALLOWED) && !(global & 1 << DIM_FLAG)){
+  while(!(Serial.available() > 0) && (global & 1 << ALLOWED) && !(global & 1 << DIM_FLAG)){
     //Serial input or PCINT breaks the loop
   }
   DISPLAY_NAME.dim(true);
-  while(!Serial.available() > 0 && (global & 1 << ALLOWED)){
+  while(!(Serial.available() > 0) && (global & 1 << ALLOWED)){
     TIMSK1 &= ~(1 << OCIE1B);
   }
   logout();
@@ -210,7 +210,7 @@ void addCard(){
         printText((char*)"0", 0, 48);
       }
       Serial.print(actualCard[i], HEX);
-      printText((actualCard[i], HEX), 0, 48, 1, WHITE);
+      printText((actualCard[i] && HEX), 0, 48, 1, WHITE);
       //----//
     }
     Serial.println();
@@ -230,11 +230,11 @@ void addCard(){
     displayText(lowestEmptyIndex);  //display all other text & shapes defined before
     clearDimTimer();
     global &= ~(1 << DIM_FLAG);
-    while(global & 1 << ADMIN_MENU && !(global & 1 << DIM_FLAG) && !Serial.available() > 0){
+    while(global & 1 << ADMIN_MENU && !(global & 1 << DIM_FLAG) && !(Serial.available() > 0)){
       ;
     }
     DISPLAY_NAME.dim(true);
-    while(global & 1 << ADMIN_MENU && !Serial.available() > 0){
+    while(global & 1 << ADMIN_MENU && !(Serial.available() > 0)){
       ;
     }
     homeScreen();
@@ -430,7 +430,7 @@ void isCardAdmin(){
     tone(BUZZER, TONE_LOW, 100);
     clearDimTimer();
 
-    boolean noChar = false;
+    //boolean noChar = false;
     global |= 1 << ADMIN_MENU;
     option = 0;
 
@@ -565,8 +565,6 @@ void isCardAdmin(){
 void setup() 
 {
   Serial.begin(BAUDRATE);   // Initiate a serial communication
-  SPI.begin();      // Initiate  SPI bus
-  mfrc522.PCD_Init();   // Initiate MFRC522
   
   global &= ~(1 << ADMIN_MENU);
 
@@ -615,6 +613,8 @@ void setup()
   displayDimSetup();
   DISPLAY_NAME.dim(false);
   
+  SPI.begin();      // Initiate  SPI bus
+  mfrc522.PCD_Init();   // Initiate MFRC522
 }
 void loop(){
   // dim the display after reaching the timer interrupt
