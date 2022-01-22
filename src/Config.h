@@ -24,7 +24,7 @@
 #define ADMIN_MENU 2
 #define PRESSED 3
 #define DIM_FLAG 4
-#define SCROLL_FLAG 5   //not used, could be replaced
+#define SCROLL_FLAG 5
 #define ALLOWED 6
 #define BUZZER_WAVE 7
 //Relay pin
