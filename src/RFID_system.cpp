@@ -331,20 +331,28 @@ void viewCards(){ //Loads the card nums from EEPROM
               if(secondIndex <= beginIndex){
                 secondIndex = i;
               }
+              if(secondIndex > beginIndex + 1){
+                secondIndex = i;
+              }
               if(i < beginIndex){
                 belowIndex = i;
               }
               else if(i == 0 && beginIndex == 0){
                 belowIndex = 0;
               }
-              Serial.print(F("Index "));
+              /*Serial.print(F("Index "));
               Serial.print(i);
-              Serial.print(F(": "));
+              Serial.print(F(": "));*/
               if(displayLine < 8 && i >= beginIndex){
                 printText((char*)"Index ", 8, 8*displayLine, 1, WHITE);
                 DISPLAY_NAME.print(i);
                 DISPLAY_NAME.print((char*)": ");
-                Serial.println("CONDITI");
+                for(byte admin = 0; admin < ADMIN_CARDS; admin++){
+                  if(EEPROM.read(MAX_EEPROM - ADMIN_CARDS + 1 + admin) == i){
+                    printText("A", 120, 8*displayLine, 1, BLACK, WHITE);
+                  }
+                }
+                DISPLAY_NAME.setCursor(66, 8*displayLine);
               }
             }
             if(y > 0 && zeroBeginning){
@@ -360,18 +368,13 @@ void viewCards(){ //Loads the card nums from EEPROM
             if(!zeroBeginning){
               Serial.print(EEPROM.read((i*4)+y), HEX);
               Serial.print(' ');
-              /*if(global & 1 << SCROLL_FLAG){
+              if(displayLine < 8 && beginIndex <= i){
                 DISPLAY_NAME.print(EEPROM.read((i*4)+y), HEX);
-              }*/
+              }
             }
             if(y == 3){
               Serial.println();
               selectedCardIndex = i;
-              /*for(byte admin = 0; admin < ADMIN_CARDS; admin++){
-                if(EEPROM.read(MAX_EEPROM - ADMIN_CARDS + 1 + admin) == i){
-                  printText("A", 120, 8*displayLine, 1, WHITE);
-                }
-              }*/
               if(displayLine < 8 && beginIndex <= i){
                 displayLine++;
               }
@@ -382,6 +385,10 @@ void viewCards(){ //Loads the card nums from EEPROM
       zeroBeginning = false;
       DISPLAY_NAME.display();
       prevOption = option;
+      Serial.print(F("belowIndex "));
+      Serial.println(belowIndex);
+      Serial.print(F("secondIndex "));
+      Serial.println(secondIndex);
     }
   }
   if(Serial.available() > 0){

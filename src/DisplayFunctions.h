@@ -59,6 +59,13 @@ void printText(const char text[], uint8_t x, uint8_t y, uint8_t fontSize, uint8_
     DISPLAY_NAME.print(text);
 }
 
+void printText(const char text[], uint8_t x, uint8_t y, uint8_t fontSize, uint8_t fontColor, uint8_t fontColor2){
+    DISPLAY_NAME.setTextSize(fontSize);
+    DISPLAY_NAME.setTextColor(fontColor, fontColor2);
+    DISPLAY_NAME.setCursor(x, y);
+    DISPLAY_NAME.print(text);
+}
+
 void printText(int text, uint8_t x, uint8_t y, uint8_t fontSize, uint8_t fontColor){
     DISPLAY_NAME.setTextSize(fontSize);
     DISPLAY_NAME.setTextColor(fontColor);
