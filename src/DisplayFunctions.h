@@ -24,7 +24,7 @@ ISR(TIMER1_COMPA_vect){
 ISR(TIMER1_COMPB_vect){
     cli();  //disable interrupts
     if(global & 1 << ALLOWED || global & 1 << ADMIN_MENU){
-        if(global & 1 << ADMIN_MENU){
+        if(global & 1 << ADMIN_MENU && global & 1 << PRESSED){
             tone(BUZZER, TONE_HIGH, 16);
         }
         else{
