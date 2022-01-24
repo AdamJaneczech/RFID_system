@@ -11,8 +11,9 @@ ISR(PCINT0_vect){   //STOP_BUTTON
         Serial.println("STOP");
         global &= ~(1 << DIM_FLAG);
         clearDimTimer();
+        OCR1B = 1563;    //100 ms beep
         TIMSK1 |= (1 << OCIE1B);
-        //tone(3, TONE_HIGH, 100);
+        tone(3, TONE_HIGH, 100);
         global &= ~(1 << ALLOWED);
         global &= ~(1 << ADMIN_MENU);
         global &= ~(1 << ADMIN_CARD); //if STOP_BUTTON is pushed during admin option selection, the next condition won't be fulfilles 
@@ -30,7 +31,7 @@ ISR(PCINT2_vect){  //Control buttons
     if((global & 1 << PRESSED)){
         if(bitCheck == 0b1){    //OK button
             if(global & 1 << ADMIN_MENU){
-                OCR1B = 250;    //8 ms beep
+                OCR1B = 250;    //16 ms beep
                 Serial.println("OK");
                 global &= ~(1 << ADMIN_MENU);
                 global &= ~(1 << DIM_FLAG);
@@ -48,7 +49,7 @@ ISR(PCINT2_vect){  //Control buttons
                 global &= ~(1 << DIM_FLAG);
                 tone(BUZZER, TONE_LOW, 16);
                 clearDimTimer();
-                OCR1B = 250;    //8 ms beep
+                OCR1B = 250;    //16 ms beep
                 TIMSK1 |= (1 << OCIE1B);
                 if(option < maxOption && option >= 0){
                     option++;
@@ -64,7 +65,7 @@ ISR(PCINT2_vect){  //Control buttons
                 global &= ~(1 << DIM_FLAG);
                 tone(BUZZER, TONE_LOW, 16);
                 clearDimTimer();
-                OCR1B = 250;    //8 ms beep
+                OCR1B = 250;    //16 ms beep
                 TIMSK1 |= (1 << OCIE1B);
                 if(option > 0 && option <= maxOption){
                     option--;
