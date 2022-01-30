@@ -7,18 +7,18 @@ void clearDimTimer(void);
 
 ISR(PCINT0_vect){   //STOP_BUTTON
     cli();
-    if((global & 1 << ALLOWED) || (global & 1 << ADMIN_MENU)){
+    global ^= (1 << PRESSED);
+    if(((global & 1 << ALLOWED) || (global & 1 << ADMIN_MENU)) && (global & 1 << PRESSED)){
         Serial.println("STOP");
+        global &= ~(1 << ALLOWED);
+        global &= ~(1 << ADMIN_MENU);
+        global &= ~(1 << ADMIN_CARD); //if STOP_BUTTON is pushed during admin option selection, the next condition won't be fulfilles 
+        digitalWrite(RELAY, HIGH);
         global &= ~(1 << DIM_FLAG);
         clearDimTimer();
         OCR1B = 1563;    //100 ms beep
         TIMSK1 |= (1 << OCIE1B);
         tone(3, TONE_HIGH, 100);
-        global &= ~(1 << ALLOWED);
-        global &= ~(1 << ADMIN_MENU);
-        global &= ~(1 << ADMIN_CARD); //if STOP_BUTTON is pushed during admin option selection, the next condition won't be fulfilles 
-        digitalWrite(RELAY, HIGH);
-        //delay(100);
     }
     sei();
 }
@@ -28,16 +28,16 @@ ISR(PCINT2_vect){  //Control buttons
     byte bitCheck = (PIND &= ~(1 << PD5)) >> 4; //shift PIND value 4 right -> PD4 at first place, PD7 at 4th place
     //Serial.println(bitCheck, BIN);
     global ^= (1 << PRESSED);
-    if((global & 1 << PRESSED)){
+    if(global & 1 << PRESSED){
         if(bitCheck == 0b1){    //OK button
             if(global & 1 << ADMIN_MENU){
-                OCR1B = 250;    //16 ms beep
                 Serial.println("OK");
                 global &= ~(1 << ADMIN_MENU);
                 global &= ~(1 << DIM_FLAG);
-                tone(BUZZER, TONE_LOW, 16);
-                clearDimTimer();
+                OCR1B = 250;    //16 ms beep
                 TIMSK1 |= (1 << OCIE1B);
+                clearDimTimer();
+                tone(BUZZER, TONE_LOW, 16);
             }
             else{
                 option = 0;
@@ -46,11 +46,12 @@ ISR(PCINT2_vect){  //Control buttons
         else if(bitCheck == 0b100){ //UP button
             //Serial.println("UP");
             if(global & 1 << ADMIN_MENU){
-                global &= ~(1 << DIM_FLAG);
                 tone(BUZZER, TONE_LOW, 16);
-                clearDimTimer();
+                global &= ~(1 << DIM_FLAG);
                 OCR1B = 250;    //16 ms beep
                 TIMSK1 |= (1 << OCIE1B);
+                clearDimTimer();
+                
                 if(option < maxOption && option >= 0){
                     option++;
                 }
@@ -62,11 +63,11 @@ ISR(PCINT2_vect){  //Control buttons
         else if(bitCheck == 0b1000){ //DOWN button
             //Serial.println("DOWN");
             if(global & 1 << ADMIN_MENU){
-                global &= ~(1 << DIM_FLAG);
-                tone(BUZZER, TONE_LOW, 16);
-                clearDimTimer();
+                global &= ~(1 << DIM_FLAG);             
                 OCR1B = 250;    //16 ms beep
                 TIMSK1 |= (1 << OCIE1B);
+                clearDimTimer();
+                tone(BUZZER, TONE_LOW, 16);
                 if(option > 0 && option <= maxOption){
                     option--;
                 }

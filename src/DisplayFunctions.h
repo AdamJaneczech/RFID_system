@@ -18,6 +18,7 @@ void displayDimSetup(){
 ISR(TIMER1_COMPA_vect){
     cli();  //disable interrupts
     global |= 1 << DIM_FLAG;
+    TIMSK1 &= ~(1 << OCIE1B);
     sei();  //enable interrupts
 }
 

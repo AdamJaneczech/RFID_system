@@ -473,7 +473,6 @@ void isCardAdmin(){
     tone(BUZZER, TONE_LOW, 100);
     clearDimTimer();
 
-    //boolean noChar = false;
     global |= 1 << ADMIN_MENU;
     option = 0;
 
@@ -610,6 +609,7 @@ void setup()
   Serial.begin(BAUDRATE);   // Initiate a serial communication
   
   global &= ~(1 << ADMIN_MENU);
+  global &= ~(1 << PRESSED);
 
   DISPLAY_NAME.begin(SSD1306_SWITCHCAPVCC, 0x3C);
 
