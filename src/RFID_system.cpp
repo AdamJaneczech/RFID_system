@@ -11,7 +11,7 @@ byte option = 0;  //selected option - aadmin menu
 byte maxOption;
 byte selectedCardIndex; //when selecting a specific card for deletion/admin rights/other
 
-volatile uint8_t global = 0b00000000;  //the global booleans are on specific bits (see Config.h)
+uint8_t global = 0b00000000;  //the global booleans are on specific bits (see Config.h)
 
 //admin options to display; their length is calculated; | used to separate the options
 const char* adminOptions[] = {(char*)"Login|", (char*)"Add ID|", (char*)"Add admin|", (char*)"Delete ID|", (char*)"View IDs|"};

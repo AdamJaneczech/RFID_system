@@ -8,13 +8,14 @@ void clearDimTimer(void);
 ISR(PCINT0_vect){   //STOP_BUTTON
     cli();
     global ^= (1 << PRESSED);
-    if(((global & 1 << ALLOWED) || (global & 1 << ADMIN_MENU)) && (global & 1 << PRESSED)){
+    if((global & 1 << ALLOWED || global & 1 << ADMIN_MENU) && (global & 1 << PRESSED)){
         Serial.println("STOP");
         global &= ~(1 << ALLOWED);
         global &= ~(1 << ADMIN_MENU);
         global &= ~(1 << ADMIN_CARD); //if STOP_BUTTON is pushed during admin option selection, the next condition won't be fulfilles 
         digitalWrite(RELAY, HIGH);
         global &= ~(1 << DIM_FLAG);
+        global = 0;
         clearDimTimer();
         OCR1B = 1563;    //100 ms beep
         TIMSK1 |= (1 << OCIE1B);
