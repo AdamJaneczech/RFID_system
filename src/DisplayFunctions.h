@@ -25,10 +25,11 @@ ISR(TIMER1_COMPA_vect){
 ISR(TIMER1_COMPB_vect){
     cli();  //disable interrupts
     if(global & 1 << ALLOWED || global & 1 << ADMIN_MENU){
-        if(global & 1 << ADMIN_MENU && global & 1 << PRESSED){
+        Serial.println(TCNT1);
+        if(global & 1 << ADMIN_MENU && global & 1 << PRESSED && TCNT1 > 240){   //the compare match occurs also when TCNT1 is cleared, therefore the 3rd condition
             tone(BUZZER, TONE_HIGH, 16);
         }
-        else{
+        else if(TCNT1 > 1500){  //avoid long tone when none of the conditions above are met
             tone(BUZZER, TONE_HIGH, 100);
         }
     }
