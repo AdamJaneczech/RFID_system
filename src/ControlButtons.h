@@ -92,5 +92,5 @@ void interruptConfig(void){
 }
 
 void clearDimTimer(){
-    TCNT1  = 0; //counter value = 0
+    TCNT1  = 1; //counter value = 1
 }
