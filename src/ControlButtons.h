@@ -33,7 +33,7 @@ ISR(PCINT2_vect){  //Control buttons
         if(bitCheck == 0b1){    //OK button
             if(global & 1 << ADMIN_MENU){
                 Serial.println("OK");
-                global &= ~(1 << ADMIN_MENU);
+                global |= (1 << OK_PRESSED);
                 global &= ~(1 << DIM_FLAG);
                 OCR1B = 250;    //16 ms beep
                 TIMSK1 |= (1 << OCIE1B);

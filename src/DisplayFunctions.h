@@ -36,11 +36,13 @@ ISR(TIMER1_COMPB_vect){
                 tone(BUZZER, TONE_HIGH, 100);
             }
             else{
+                Serial.println("Low");
                 tone(BUZZER, TONE_LOW, 100);
             }
         }
     }
     else{
+        Serial.println("Low2");
         tone(BUZZER, TONE_LOW, 100);
     }
     sei();  //enable interrupts

@@ -280,7 +280,7 @@ void viewCards(){ //Loads the card nums from EEPROM
   byte secondIndex = 0;
   byte belowIndex = 0;
   //Serial.println("Entered a loop");
-  while((global & 1 << ADMIN_MENU) && !Serial.available()){
+  while(!(global & 1 << OK_PRESSED) && (global & 1 << ADMIN_MENU) && !Serial.available()){
     if(prevOption != option){
       DISPLAY_NAME.fillRect(0,0,8,64,BLACK);  //clean the cursor pixels
       //move the cursor only in the display area
@@ -391,6 +391,9 @@ void viewCards(){ //Loads the card nums from EEPROM
       Serial.println(secondIndex);
     }
   }
+  if(global & 1 << OK_PRESSED){
+    global &= ~(1 << OK_PRESSED);
+  }
   if(Serial.available() > 0){
     selectedCardIndex = enterCardIndex();
   }
@@ -499,7 +502,7 @@ void isCardAdmin(){
     uint8_t optionLength = 0;
     //option++; //tentative -> for testing only
 
-    while(!Serial.available() && (global & 1 << ADMIN_MENU)){
+    while(!Serial.available() && (global & 1 << ADMIN_MENU) && !(global & 1 << OK_PRESSED)){
       if(prevOption != option){
         //Serial.println("CONDITION");
         optionLength = 0;
@@ -516,7 +519,7 @@ void isCardAdmin(){
       }
       if(optionLength >= 5){
         //scroll forward loop
-        for(byte i = 0; i <= (optionLength - 5) * 12 && (global & 1 << ADMIN_MENU) && prevOption == option; i++){ //space for 5 letters
+        for(byte i = 0; i <= (optionLength - 5) * 12 && (global & 1 << ADMIN_MENU) && prevOption == option && !(global & 1 << OK_PRESSED); i++){ //space for 5 letters
           DISPLAY_NAME.fillRect(0,23,68,24,BLACK);
           DISPLAY_NAME.setCursor(3-i, 24);
           DISPLAY_NAME.setTextColor(WHITE);
@@ -536,7 +539,7 @@ void isCardAdmin(){
           }
         }
         //scroll back loop
-        for(byte i = (optionLength - 5) * 12 ; i > 0 && (global & 1 << ADMIN_MENU) && prevOption == option; i -= 3){ //space for 5 letters
+        for(byte i = (optionLength - 5) * 12 ; i > 0 && (global & 1 << ADMIN_MENU) && prevOption == option && !(global & 1 << OK_PRESSED); i -= 3){ //space for 5 letters
           DISPLAY_NAME.fillRect(0,22,68,24,BLACK);
           DISPLAY_NAME.setCursor(3-i, 24);
           DISPLAY_NAME.setTextColor(WHITE);
@@ -569,7 +572,7 @@ void isCardAdmin(){
         DISPLAY_NAME.display();
         cleanSerial(); //Added this loop because of ASCII line break command
     }
-    global |= 1 << ADMIN_MENU; //prepare for the next menu level
+    global &= ~(1 << OK_PRESSED); //prepare for the next menu level
     //Here, code after interrupt (OK_BUTTON) happens
     //Serial.println(option);
     if(global & 1 << ADMIN_CARD){
@@ -609,6 +612,7 @@ void setup()
   Serial.begin(BAUDRATE);   // Initiate a serial communication
   
   global &= ~(1 << ADMIN_MENU);
+  global &= ~(1 << OK_PRESSED);
   global &= ~(1 << PRESSED);
 
   DISPLAY_NAME.begin(SSD1306_SWITCHCAPVCC, 0x3C);
