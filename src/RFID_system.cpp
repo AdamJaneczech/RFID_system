@@ -40,7 +40,6 @@ void cleanSerial(){
 
 void logout(){
   digitalWrite(RELAY, HIGH);  //turn the relay pin HIGH -> switch it off
-  tone(BUZZER, TONE_HIGH, 100);
   homeScreen();
   Serial.println(F("Logout"));
 }
@@ -62,8 +61,9 @@ void login(){
     //Serial input or PCINT breaks the loop
   }
   DISPLAY_NAME.dim(true);
+  TIMSK1 &= ~(1 << OCIE1B);
   while(!(Serial.available() > 0) && (global & 1 << ALLOWED)){
-    TIMSK1 &= ~(1 << OCIE1B);
+    
   }
   logout();
 }
@@ -136,10 +136,10 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
     for(int y = i; y < i + 4; y++){
       if(EEPROM.read(y) == actualCard[y-i] && y == i){
         global |= 1 << REGISTERED;
-        Serial.println(F("OK"));
+        //Serial.println(F("OK"));
       }
       if(EEPROM.read(y) == actualCard[y-i] && y != i && (global & 1 << REGISTERED)){
-        Serial.println(F("OK"));
+        //Serial.println(F("OK"));
       }
       if(EEPROM.read(y) != actualCard[y-i]){
         global &= ~(1 << REGISTERED);
@@ -153,7 +153,7 @@ void isCardRegistered(){ //modified here -> EEPROM direct reading
       DISPLAY_NAME.print(F("Registered at: " ));
       DISPLAY_NAME.print(actualCardIndex);
       DISPLAY_NAME.display();
-      //
+      global &= ~(1 << PRESSED);  //somehow the PRESSED bit stays high sometimes
       Serial.print(F("Card registered at: "));
       Serial.println(actualCardIndex);
       for(int index = MAX_EEPROM - ADMIN_CARDS + 1; index <= MAX_EEPROM; index++){
