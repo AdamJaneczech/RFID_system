@@ -8,14 +8,14 @@ void clearDimTimer(void);
 ISR(PCINT0_vect){   //STOP_BUTTON
     cli();
     global ^= (1 << PRESSED);
+    Serial.print(global & 1 << PRESSED);
     if((global & 1 << ALLOWED || global & 1 << ADMIN_MENU) && (global & 1 << PRESSED)){
         Serial.println("STOP");
         global &= ~(1 << ALLOWED);
         global &= ~(1 << ADMIN_MENU);
-        global &= ~(1 << ADMIN_CARD); //if STOP_BUTTON is pushed during admin option selection, the next condition won't be fulfilles 
+        global &= ~(1 << ADMIN_CARD); //if STOP_BUTTON is pushed during admin option selection, the next condition won't be fulfilled
         digitalWrite(RELAY, HIGH);
         global &= ~(1 << DIM_FLAG);
-        global = 0;
         clearDimTimer();
         OCR1B = 1563;    //100 ms beep
         TIMSK1 |= (1 << OCIE1B);
@@ -29,6 +29,7 @@ ISR(PCINT2_vect){  //Control buttons
     byte bitCheck = (PIND &= ~(1 << PD5)) >> 4; //shift PIND value 4 right -> PD4 at first place, PD7 at 4th place
     //Serial.println(bitCheck, BIN);
     global ^= (1 << PRESSED);
+    Serial.print(global & 1 << PRESSED);
     if(global & 1 << PRESSED){
         if(bitCheck == 0b1){    //OK button
             if(global & 1 << ADMIN_MENU){

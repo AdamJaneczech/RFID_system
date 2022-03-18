@@ -25,9 +25,9 @@ ISR(TIMER1_COMPA_vect){
 ISR(TIMER1_COMPB_vect){
     cli();  //disable interrupts
     if(global & 1 << ALLOWED || global & 1 << ADMIN_MENU){
-        Serial.println(TCNT1);
+        /*Serial.println(TCNT1);
         Serial.println(global & 1 << ALLOWED);
-        Serial.println(global & 1 << ADMIN_MENU);
+        Serial.println(global & 1 << ADMIN_MENU);*/
         if(global & 1 << ADMIN_MENU && global & 1 << PRESSED && TCNT1 > 240){   //the compare match occurs also when TCNT1 is cleared, therefore the 3rd condition
             tone(BUZZER, TONE_HIGH, 16);
         }
@@ -122,6 +122,8 @@ void homeScreen(){
     printText((char*)"Last user: ", 0, 56, 1, WHITE);
     displayText(actualCardIndex);
     DISPLAY_NAME.display();
+    Serial.print("global: ");
+    Serial.println(global, BIN);
 }
 
 void homeScreen(boolean firstTimeDisplay){

@@ -53,6 +53,7 @@ void login(){
   digitalWrite(RELAY, LOW);
   Serial.println(F("Passed. Login OK"));
   global |= 1 << ALLOWED; //interrupt makes this false
+  global &= ~(1 << PRESSED);
   cleanSerial();
   DISPLAY_NAME.fillRect(0,0,128-56,42,BLACK);
   DISPLAY_NAME.fillRect(100,56,128,8,BLACK);  //clear the mysterious sign appearing on the display
@@ -569,7 +570,9 @@ void isCardAdmin(){
         DISPLAY_NAME.display();
         cleanSerial(); //Added this loop because of ASCII line break command
     }
-    global |= 1 << ADMIN_MENU; //prepare for the next menu level
+    if(global & 1 << ADMIN_CARD){
+      global |= 1 << ADMIN_MENU; //prepare for the next menu level
+    }
     //Here, code after interrupt (OK_BUTTON) happens
     //Serial.println(option);
     if(global & 1 << ADMIN_CARD){
