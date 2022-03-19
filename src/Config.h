@@ -31,5 +31,10 @@
 #define RELAY 9
 //OLED display name
 #define DISPLAY_NAME display
+//define neopixel setup constants
+#define NEOPIXEL_PIN 5
+#define LEDS 24
 //Create MFRC522 instance
 MFRC522 mfrc522(SS_PIN, RST_PIN);
+//Initialize NeoPixel LED stripe
+//Adafruit_NeoPixel neopixel(LEDS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);	//definice nového LED pásku

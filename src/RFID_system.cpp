@@ -2,6 +2,7 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <EEPROM.h>
+#include <Adafruit_NeoPixel.h>
 
 byte actualCard[4]; //variable for storing the active card number
 byte actualCardIndex; //variable for storing the actual card index
@@ -573,13 +574,10 @@ void isCardAdmin(){
         DISPLAY_NAME.display();
         cleanSerial(); //Added this loop because of ASCII line break command
     }
-<<<<<<< HEAD
     if(global & 1 << ADMIN_CARD){
       global |= 1 << ADMIN_MENU; //prepare for the next menu level
     }
-=======
     global &= ~(1 << OK_PRESSED); //prepare for the next menu level
->>>>>>> 7c4eca9decc7944fa0d0a8244f636d84e3cea76d
     //Here, code after interrupt (OK_BUTTON) happens
     //Serial.println(option);
     if(global & 1 << ADMIN_CARD){
@@ -621,6 +619,9 @@ void setup()
   global &= ~(1 << ADMIN_MENU);
   global &= ~(1 << OK_PRESSED);
   global &= ~(1 << PRESSED);
+
+  //neopixel.setPixelColor(0, 255, 255, 255);
+  //neopixel.show();
 
   DISPLAY_NAME.begin(SSD1306_SWITCHCAPVCC, 0x3C);
 

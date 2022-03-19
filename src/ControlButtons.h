@@ -8,11 +8,7 @@ void clearDimTimer(void);
 ISR(PCINT0_vect){   //STOP_BUTTON
     cli();
     global ^= (1 << PRESSED);
-<<<<<<< HEAD
-    Serial.print(global & 1 << PRESSED);
-=======
     Serial.println(global & 1 << PRESSED);
->>>>>>> 7c4eca9decc7944fa0d0a8244f636d84e3cea76d
     if((global & 1 << ALLOWED || global & 1 << ADMIN_MENU) && (global & 1 << PRESSED)){
         Serial.println("STOP");
         global &= ~(1 << ALLOWED);
