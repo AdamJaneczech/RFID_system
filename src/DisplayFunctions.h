@@ -28,8 +28,14 @@ ISR(TIMER1_COMPB_vect){
         /*Serial.println(TCNT1);
         Serial.println(global & 1 << ALLOWED);
         Serial.println(global & 1 << ADMIN_MENU);*/
-        if(global & 1 << ADMIN_MENU && global & 1 << PRESSED && TCNT1 > 240){   //the compare match occurs also when TCNT1 is cleared, therefore the 3rd condition
+        if(global & 1 << ADMIN_MENU && global & 1 << PRESSED && TCNT1 > 240 && TCNT1 < 260){   //the compare match occurs also when TCNT1 is cleared, therefore the 3rd condition
             tone(BUZZER, TONE_HIGH, 16);
+            Serial.println("short-high");
+            if(global & 1 << ALLOWED){
+                global &= ~(1 << ADMIN_MENU);
+                global &= ~(1 << ADMIN_CARD);
+                //global &= ~(1 << OK_PRESSED);
+            }
         }
         else if(TCNT1 > 1500){  //avoid long tone when none of the conditions above are met
             if(global & 1 << ALLOWED || global & 1 << ADMIN_MENU){
@@ -110,7 +116,7 @@ void displayText(int text){
 }
 
 void homeScreen(){
-    clearDimTimer();
+    //clearDimTimer();  //caused some sound issues
     DISPLAY_NAME.dim(false);
 
     DISPLAY_NAME.clearDisplay();

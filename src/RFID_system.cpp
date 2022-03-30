@@ -48,12 +48,15 @@ void logout(){
 void login(){
   global &= ~(1 << DIM_FLAG);
   clearDimTimer();
-  TIMSK1 |= (1 << OCIE1B);
-  tone(BUZZER, TONE_LOW, 100);
+  if(!(TIMSK1 & (1 << OCIE1B))){
+    TIMSK1 |= (1 << OCIE1B);
+  }
+  if(global & 1 << ADMIN_MENU){
+    tone(BUZZER, TONE_LOW, 100);
+  }
   digitalWrite(RELAY, LOW);
   Serial.println(F("Passed. Login OK"));
   global |= 1 << ALLOWED; //interrupt makes this false
-  global &= ~(1 << PRESSED);
   cleanSerial();
   DISPLAY_NAME.fillRect(0,0,128-56,42,BLACK);
   DISPLAY_NAME.fillRect(100,56,128,8,BLACK);  //clear the mysterious sign appearing on the display
@@ -62,6 +65,7 @@ void login(){
   while(!(Serial.available() > 0) && (global & 1 << ALLOWED) && !(global & 1 << DIM_FLAG)){
     //Serial input or PCINT breaks the loop
   }
+  global &= ~(1 << PRESSED);
   DISPLAY_NAME.dim(true);
   TIMSK1 &= ~(1 << OCIE1B);
   while(!(Serial.available() > 0) && (global & 1 << ALLOWED)){
@@ -474,6 +478,7 @@ void isCardAdmin(){
     maxOption = sizeof(adminOptions) / 2 - 1;  //determine the maximum option size
     cleanSerial();
     global &= ~(1 << DIM_FLAG);
+    global &= ~(1 << PRESSED);
     TIMSK1 |= (1 << OCIE1B);
     tone(BUZZER, TONE_LOW, 100);
     clearDimTimer();
@@ -608,7 +613,7 @@ void isCardAdmin(){
     else{
       logout();
     }
-    OCR1B |= 1563; //0.1-second interval
+    //OCR1B |= 1563; //0.1-second interval
   }
 }
 

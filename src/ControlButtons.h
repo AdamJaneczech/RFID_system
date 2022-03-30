@@ -29,7 +29,7 @@ ISR(PCINT2_vect){  //Control buttons
     byte bitCheck = (PIND &= ~(1 << PD5)) >> 4; //shift PIND value 4 right -> PD4 at first place, PD7 at 4th place
     //Serial.println(bitCheck, BIN);
     global ^= (1 << PRESSED);
-    Serial.print(global & 1 << PRESSED);
+    Serial.println(global & 1 << PRESSED);
     if(global & 1 << PRESSED){
         if(bitCheck == 0b1){    //OK button
             if(global & 1 << ADMIN_MENU){
@@ -40,6 +40,7 @@ ISR(PCINT2_vect){  //Control buttons
                 TIMSK1 |= (1 << OCIE1B);
                 clearDimTimer();
                 tone(BUZZER, TONE_LOW, 16);
+                Serial.println("lowtone-short");
             }
             else{
                 option = 0;
